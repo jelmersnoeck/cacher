@@ -31,8 +31,7 @@ func NewMemoryCache() *MemoryCache {
 //
 // ttl defines the number of seconds the value should be cached.
 func (c *MemoryCache) Add(key string, value interface{}, ttl int) bool {
-	_, exists := c.items[key]
-	if exists {
+	if c.exists(key) {
 		return false
 	}
 
@@ -58,4 +57,13 @@ func (c *MemoryCache) Get(key string) interface{} {
 func (c *MemoryCache) Flush() bool {
 	c.items = make(map[string]cachedItem)
 	return true
+}
+
+func (c *MemoryCache) exists(key string) bool {
+	_, exists := c.items[key]
+	if exists {
+		return true
+	}
+
+	return false
 }
