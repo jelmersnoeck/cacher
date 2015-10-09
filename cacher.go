@@ -9,4 +9,5 @@ package cacher
 type Cacher interface {
 	Set(key string, value interface{}) bool
 	Get(key string) interface{}
+	Flush() bool
 }

@@ -29,3 +29,9 @@ func (c *MemoryCache) Set(key string, value interface{}) bool {
 func (c *MemoryCache) Get(key string) interface{} {
 	return c.items[key]
 }
+
+// Flush will remove all the items from the hash.
+func (c *MemoryCache) Flush() bool {
+	c.items = make(map[string]interface{})
+	return true
+}
