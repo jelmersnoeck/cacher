@@ -7,8 +7,8 @@ package cacher
 
 // Cacher is the Caching interface that uniforms all the different strategies.
 type Cacher interface {
-	Add(key string, value interface{}) bool
-	Set(key string, value interface{}) bool
+	Add(key string, value interface{}, ttl int) bool
+	Set(key string, value interface{}, ttl int) bool
 	Get(key string) interface{}
 	Flush() bool
 }
