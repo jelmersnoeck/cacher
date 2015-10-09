@@ -20,6 +20,25 @@ func TestMemorySet(t *testing.T) {
 	}
 }
 
+func TestMemoryAdd(t *testing.T) {
+	cache := cacher.NewMemoryCache()
+
+	if !cache.Add("key1", "value1") {
+		t.Errorf("Expecting `key1` to be added to the cache")
+		t.FailNow()
+	}
+
+	if cache.Add("key1", "value2") {
+		t.Errorf("Expecting `key1` not to be added to the cache")
+		t.FailNow()
+	}
+
+	if cache.Get("key1") != "value1" {
+		t.Errorf("Expecting `key1` to equal `value1`")
+		t.FailNow()
+	}
+}
+
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 

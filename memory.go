@@ -19,7 +19,19 @@ func NewMemoryCache() *MemoryCache {
 	return cache
 }
 
-// Set adds the value to the specified key in the map.
+// Add an item to the cache. If the item is already cached, the value won't be
+// overwritten.
+func (c *MemoryCache) Add(key string, value interface{}) bool {
+	_, exists := c.items[key]
+	if exists {
+		return false
+	}
+
+	return c.Set(key, value)
+}
+
+// Set sets the value of an item, regardless of wether or not the value is
+// already cached.
 func (c *MemoryCache) Set(key string, value interface{}) bool {
 	c.items[key] = value
 	return true
