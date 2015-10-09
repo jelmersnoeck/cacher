@@ -7,7 +7,28 @@ Cacher is a port of the PHP a library [Scrapbook](https://github.com/matthiasmul
 It defines an interface to interact with several cache systems without having to
 worry about the implementation of said cache layer.
 
-## Impelmentations
+## Methods
+
+### `Add(key string, value interface{}, ttl int) bool`
+
+Adds a new key to the cache if the key is not already stored. If the key is
+already stored false will be returned.
+
+### `Set(key string, value interface{}, ttl int) bool`
+
+Sets the value for the specified key, regardless of wether or not the key has
+already been set. If the key has already been set, it will overwrite the
+previous value.
+
+### `Get(key string) interface{}`
+
+Gets the value for the given key.
+
+### `Flush() bool`
+
+Resets the cache store and deletes all cached values.
+
+## Implementations
 
 ### MemoryCache
 
