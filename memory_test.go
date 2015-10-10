@@ -134,6 +134,34 @@ func TestMemoryGet(t *testing.T) {
 	}
 }
 
+func TestMemoryGetMulti(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	items := map[string]interface{}{
+		"item1": 1,
+		"item2": "string",
+	}
+
+	cache.SetMulti(items, 0)
+
+	var keys []string
+	for k, _ := range items {
+		keys = append(keys, k)
+	}
+
+	values := cache.GetMulti(keys)
+
+	if values["item1"] != 1 {
+		t.Errorf("Expected `item1` to equal `1`")
+		t.FailNow()
+	}
+
+	if values["item2"] != "string" {
+		t.Errorf("Expected `item2` to equal `string`")
+		t.FailNow()
+	}
+}
+
 func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 

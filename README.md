@@ -42,6 +42,10 @@ will be returned.
 
 Gets the value for the given key.
 
+#### `GetMulti(keys []string) map[string]interface{}`
+
+Gets a list of values for a range of given keys. This uses `Get` internally.
+
 #### `Flush() bool`
 
 Resets the cache store and deletes all cached values.

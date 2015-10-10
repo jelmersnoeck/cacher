@@ -107,6 +107,18 @@ func (c *MemoryCache) Get(key string) (interface{}, bool) {
 	return nil, false
 }
 
+// GetMulti gets multiple values from the cache and returns them as a map. It
+// uses `Get` internally to retrieve the data.
+func (c *MemoryCache) GetMulti(keys []string) map[string]interface{} {
+	items := make(map[string]interface{})
+
+	for _, k := range keys {
+		items[k], _ = c.Get(k)
+	}
+
+	return items
+}
+
 // Increment adds a value of offset to the initial value. If the initial value
 // is already set, it will be added to the value currently stored in the cache.
 func (c *MemoryCache) Increment(key string, initial, offset, ttl int) bool {
