@@ -4,7 +4,11 @@
 
 package cacher
 
-import "time"
+import (
+	"runtime"
+	"time"
+	"unsafe"
+)
 
 type cachedItem struct {
 	value  interface{}
@@ -16,13 +20,25 @@ type cachedItem struct {
 // cache will be emptied when the application has run.
 type MemoryCache struct {
 	items map[string]cachedItem
+	keys  []string
+	limit uintptr
+	size  uintptr
 }
 
 // NewMemoryCache creates a new instance of MemoryCache and initiates the
 // storage map.
-func NewMemoryCache() *MemoryCache {
+func NewMemoryCache(limit uintptr) *MemoryCache {
 	cache := new(MemoryCache)
 	cache.items = make(map[string]cachedItem)
+	if limit == 0 {
+		// 10% of system memory
+		var memStats runtime.MemStats
+		runtime.ReadMemStats(&memStats)
+		cache.limit = uintptr(float64(memStats.Sys) * 0.1)
+	} else {
+		cache.limit = limit
+	}
+	cache.size = 0
 
 	return cache
 }
@@ -54,6 +70,9 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 	}
 
 	c.items[key] = cachedItem{value, expiry, expire}
+	c.keys = append(c.keys, key)
+	c.size += unsafe.Sizeof(c.items[key])
+	c.evict()
 	return true
 }
 
@@ -65,6 +84,7 @@ func (c *MemoryCache) Get(key string) interface{} {
 // Flush will remove all the items from the hash.
 func (c *MemoryCache) Flush() bool {
 	c.items = make(map[string]cachedItem)
+	c.size = 0
 	return true
 }
 
@@ -72,14 +92,22 @@ func (c *MemoryCache) Flush() bool {
 // stored, it will remove the item from the cache. If it is not stored, it will
 // return false.
 func (c *MemoryCache) Delete(key string) bool {
-	_, exists := c.items[key]
-
-	if exists {
-		delete(c.items, key)
-		return true
+	for i, v := range c.keys {
+		if v == key {
+			return c.removeAt(i)
+		}
 	}
 
 	return false
+}
+
+func (c *MemoryCache) removeAt(index int) bool {
+	key := c.keys[index]
+	c.keys = append(c.keys[:index], c.keys[index+1:]...)
+	c.size -= unsafe.Sizeof(c.items[key])
+	delete(c.items, key)
+
+	return true
 }
 
 // exists checks if a key is stored in the cache.
@@ -99,4 +127,15 @@ func (c *MemoryCache) exists(key string) bool {
 	}
 
 	return false
+}
+
+// evict clears off the items in the cache that have been least active.
+func (c *MemoryCache) evict() {
+	for {
+		if c.size > c.limit {
+			c.removeAt(0)
+		} else {
+			break
+		}
+	}
 }
