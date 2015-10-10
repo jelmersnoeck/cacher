@@ -11,7 +11,7 @@ func acceptCacher(c cacher.Cacher) bool {
 }
 
 func TestMemoryCache(t *testing.T) {
-	cache := cacher.NewMemoryCache()
+	cache := cacher.NewMemoryCache(0)
 
 	if !acceptCacher(cache) {
 		t.Errorf("Expected MemoryCache to be accepted")
