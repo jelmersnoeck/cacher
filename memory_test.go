@@ -9,12 +9,12 @@ import (
 func TestMemorySet(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 
-	if !cache.Set("key1", "value", 1) {
+	if !cache.Set("key1", "value", 0) {
 		t.Errorf("Expecting `key1` to be `value`")
 		t.Fail()
 	}
 
-	if !cache.Set("key2", 2, 1) {
+	if !cache.Set("key2", 2, 0) {
 		t.Errorf("Expecting `key2` to be `2`")
 		t.Fail()
 	}
@@ -23,12 +23,12 @@ func TestMemorySet(t *testing.T) {
 func TestMemoryAdd(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 
-	if !cache.Add("key1", "value1", 1) {
+	if !cache.Add("key1", "value1", 0) {
 		t.Errorf("Expecting `key1` to be added to the cache")
 		t.FailNow()
 	}
 
-	if cache.Add("key1", "value2", 1) {
+	if cache.Add("key1", "value2", 0) {
 		t.Errorf("Expecting `key1` not to be added to the cache")
 		t.FailNow()
 	}
@@ -42,7 +42,7 @@ func TestMemoryAdd(t *testing.T) {
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 
-	cache.Set("key1", "value", 1)
+	cache.Set("key1", "value", 0)
 	if cache.Get("key1") != "value" {
 		t.Errorf("Expecting `key1` to be `value`")
 		t.Fail()
@@ -52,7 +52,7 @@ func TestMemoryGet(t *testing.T) {
 func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 
-	cache.Set("key1", "value1", 1)
+	cache.Set("key1", "value1", 0)
 	if cache.Get("key1") != "value1" {
 		t.Errorf("Expecting `key1` to equal `value1`")
 		t.Fail()
