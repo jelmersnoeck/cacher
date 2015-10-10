@@ -77,6 +77,17 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 	return true
 }
 
+// SetMulti sets multiple values for their respective keys. This is a shorthand
+// to use `Set` multiple times.
+func (c *MemoryCache) SetMulti(items map[string]interface{}, ttl int) map[string]bool {
+	results := make(map[string]bool)
+	for key, value := range items {
+		results[key] = c.Set(key, value, ttl)
+	}
+
+	return results
+}
+
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
 func (c *MemoryCache) Replace(key string, value interface{}, ttl int) bool {

@@ -20,6 +20,20 @@ func TestMemorySet(t *testing.T) {
 	}
 }
 
+func TestMemorySetMulti(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	items := map[string]interface{}{
+		"item1": 1,
+		"item2": "string",
+	}
+
+	cache.SetMulti(items, 0)
+
+	compare(t, cache, "item1", 1)
+	compare(t, cache, "item2", "string")
+}
+
 func TestMemoryAdd(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 

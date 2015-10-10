@@ -9,6 +9,7 @@ package cacher
 type Cacher interface {
 	Add(key string, value interface{}, ttl int) bool
 	Set(key string, value interface{}, ttl int) bool
+	SetMulti(keys map[string]interface{}, ttl int) map[string]bool
 	Replace(key string, value interface{}, ttl int) bool
 	Increment(key string, initial, offset, ttl int) bool
 	Decrement(key string, initial, offset, ttl int) bool

@@ -20,6 +20,11 @@ Sets the value for the specified key, regardless of wether or not the key has
 already been set. If the key has already been set, it will overwrite the
 previous value.
 
+#### `SetMulti(items map[string]interface{}, ttl int) map[string]bool`
+
+A shorthand to set multiple key/value combinations at a time. This uses `Set`
+internally to add the items to the cache.
+
 #### `Increment(key string, initial, offset, ttl int) bool`
 
 Increments the initial value - or cached value if present - by offset.
