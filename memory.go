@@ -71,10 +71,20 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 
 	c.items[key] = cachedItem{value, expiry, expire}
 	c.keys = append(c.keys, key)
-	c.size += unsafe.Sizeof(c.items[key])
+	c.size += unsafe.Sizeof(c.items[key]) // TODO: if already exists, don't add this all
 	c.lru(key)
 	c.evict()
 	return true
+}
+
+// Replace will update and only update the value of a cache key. If the key is
+// not previously used, we will return false.
+func (c *MemoryCache) Replace(key string, value interface{}, ttl int) bool {
+	if !c.exists(key) {
+		return false
+	}
+
+	return c.Set(key, value, ttl)
 }
 
 // Get gets the value out of the map associated with the provided key.

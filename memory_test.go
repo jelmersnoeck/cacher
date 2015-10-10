@@ -36,6 +36,21 @@ func TestMemoryAdd(t *testing.T) {
 	compare(t, cache, "key1", "value1")
 }
 
+func TestMemoryReplace(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	if cache.Replace("key1", "value1", 0) {
+		t.Errorf("Key1 is not set yet, should not be able to replace.")
+		t.FailNow()
+	}
+
+	cache.Set("key1", "value1", 0)
+	if !cache.Replace("key1", "value1", 0) {
+		t.Errorf("Key1 has been set, should be able to replace.")
+		t.FailNow()
+	}
+}
+
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
