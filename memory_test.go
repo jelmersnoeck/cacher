@@ -51,6 +51,63 @@ func TestMemoryReplace(t *testing.T) {
 	}
 }
 
+func TestMemoryIncrement(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	cache.Increment("key1", 0, 1, 0)
+	compare(t, cache, "key1", 0)
+
+	cache.Increment("key1", 0, 1, 0)
+	compare(t, cache, "key1", 1)
+
+	cache.Set("string", "value", 0)
+	if cache.Increment("string", 0, 1, 0) {
+		t.Errorf("Can't increment a string value.")
+		t.FailNow()
+	}
+
+	if cache.Increment("key2", 0, 0, 0) {
+		t.Errorf("Can't have an offset of <= 0")
+		t.FailNow()
+	}
+
+	if cache.Increment("key3", -1, 1, 0) {
+		t.Errorf("Can't have an initial value of < 0")
+		t.FailNow()
+	}
+}
+
+func TestMemoryDecrement(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	cache.Decrement("key1", 10, 1, 0)
+	compare(t, cache, "key1", 10)
+
+	cache.Decrement("key1", 10, 1, 0)
+	compare(t, cache, "key1", 9)
+
+	cache.Set("string", "value", 0)
+	if cache.Decrement("string", 0, 1, 0) {
+		t.Errorf("Can't decrement a string value.")
+		t.FailNow()
+	}
+
+	if cache.Decrement("key2", 0, 0, 0) {
+		t.Errorf("Can't have an offset of <= 0")
+		t.FailNow()
+	}
+
+	if cache.Decrement("key3", -1, 1, 0) {
+		t.Errorf("Can't have an initial value of < 0")
+		t.FailNow()
+	}
+
+	if cache.Decrement("key1", 10, 10, 0) {
+		t.Errorf("Can't decrement below 0")
+		t.FailNow()
+	}
+}
+
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 

@@ -10,6 +10,8 @@ type Cacher interface {
 	Add(key string, value interface{}, ttl int) bool
 	Set(key string, value interface{}, ttl int) bool
 	Replace(key string, value interface{}, ttl int) bool
+	Increment(key string, initial, offset, ttl int) bool
+	Decrement(key string, initial, offset, ttl int) bool
 	Delete(key string) bool
 	Get(key string) (interface{}, bool)
 	Flush() bool

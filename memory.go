@@ -96,6 +96,27 @@ func (c *MemoryCache) Get(key string) (interface{}, bool) {
 	return nil, false
 }
 
+// Increment adds a value of offset to the initial value. If the initial value
+// is already set, it will be added to the value currently stored in the cache.
+func (c *MemoryCache) Increment(key string, initial, offset, ttl int) bool {
+	if initial < 0 || offset <= 0 {
+		return false
+	}
+
+	return c.incrementOffset(key, initial, offset, ttl)
+}
+
+// Decrement subtracts a value of offset to the initial value. If the initial
+// value is already set, it will be added to the value currently stored in the
+// cache.
+func (c *MemoryCache) Decrement(key string, initial, offset, ttl int) bool {
+	if initial < 0 || offset <= 0 {
+		return false
+	}
+
+	return c.incrementOffset(key, initial, offset*-1, ttl)
+}
+
 // Flush will remove all the items from the hash.
 func (c *MemoryCache) Flush() bool {
 	c.items = make(map[string]cachedItem)
@@ -116,6 +137,7 @@ func (c *MemoryCache) Delete(key string) bool {
 	return false
 }
 
+// removeAt will remove a specific indexed value from our cache.
 func (c *MemoryCache) removeAt(index int) bool {
 	key := c.keys[index]
 	c.keys = append(c.keys[:index], c.keys[index+1:]...)
@@ -123,6 +145,28 @@ func (c *MemoryCache) removeAt(index int) bool {
 	delete(c.items, key)
 
 	return true
+}
+
+// incrementOffset is a common incrementor method used between Increment and
+// Decrement. If the key isn't set before, we will set the initial value. If
+// there is a value present, we will add the given offset to that value and
+// update the value with the new TTL.
+func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int) bool {
+	if !c.exists(key) {
+		return c.Set(key, initial, ttl)
+	}
+
+	val, ok := c.items[key].value.(int)
+	if !ok {
+		return false
+	}
+
+	val += offset
+	if val < 0 {
+		return false
+	}
+
+	return c.Set(key, val, ttl)
 }
 
 // exists checks if a key is stored in the cache.
