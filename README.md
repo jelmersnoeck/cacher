@@ -54,6 +54,11 @@ Resets the cache store and deletes all cached values.
 
 Deletes a key from the cache.
 
+#### `DeleteMulti(keys []string) map[string]bool`
+
+Deletes multiple keys at a time and returns with a result set to see if the
+deletes were successful.
+
 ## Implementations
 
 ### MemoryCache

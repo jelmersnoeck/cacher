@@ -162,6 +162,51 @@ func TestMemoryGetMulti(t *testing.T) {
 	}
 }
 
+func TestMemoryDelete(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	cache.Set("key1", "value1", 0)
+	compare(t, cache, "key1", "value1")
+
+	cache.Delete("key1")
+
+	if _, ok := cache.Get("key1"); ok {
+		t.Errorf("`key1` should be deleted from the cache.")
+		t.FailNow()
+	}
+}
+
+func TestMemoryDeleteMulti(t *testing.T) {
+	cache := cacher.NewMemoryCache(0)
+
+	items := map[string]interface{}{
+		"item1": 1,
+		"item2": "string",
+	}
+
+	cache.SetMulti(items, 0)
+	cache.Set("key1", "value1", 0)
+
+	var keys []string
+	for k, _ := range items {
+		keys = append(keys, k)
+	}
+
+	cache.DeleteMulti(keys)
+
+	if _, ok := cache.Get("item1"); ok {
+		t.Errorf("`item1` should be deleted from the cache.")
+		t.FailNow()
+	}
+
+	if _, ok := cache.Get("item2"); ok {
+		t.Errorf("`item2` should be deleted from the cache.")
+		t.FailNow()
+	}
+
+	compare(t, cache, "key1", "value1")
+}
+
 func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 

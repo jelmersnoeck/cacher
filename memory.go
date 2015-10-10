@@ -160,6 +160,19 @@ func (c *MemoryCache) Delete(key string) bool {
 	return false
 }
 
+// DeleteMulti will delete multiple values at a time. It uses the `Delete`
+// method internally to do so. It will return a map of results to see if the
+// deletion is successful.
+func (c *MemoryCache) DeleteMulti(keys []string) map[string]bool {
+	results := make(map[string]bool)
+
+	for _, key := range keys {
+		results[key] = c.Delete(key)
+	}
+
+	return results
+}
+
 // removeAt will remove a specific indexed value from our cache.
 func (c *MemoryCache) removeAt(index int) bool {
 	key := c.keys[index]

@@ -14,6 +14,7 @@ type Cacher interface {
 	Increment(key string, initial, offset, ttl int) bool
 	Decrement(key string, initial, offset, ttl int) bool
 	Delete(key string) bool
+	DeleteMulti(keys []string) map[string]bool
 	Get(key string) (interface{}, bool)
 	GetMulti(keys []string) map[string]interface{}
 	Flush() bool
