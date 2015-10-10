@@ -28,6 +28,10 @@ Gets the value for the given key.
 
 Resets the cache store and deletes all cached values.
 
+### `Delete(key string) bool`
+
+Deletes a key from the cache.
+
 ## Implementations
 
 ### MemoryCache
