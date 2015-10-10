@@ -20,6 +20,11 @@ Sets the value for the specified key, regardless of wether or not the key has
 already been set. If the key has already been set, it will overwrite the
 previous value.
 
+#### `Replace(key string, value interface{}, ttl int) bool`
+
+Replace will update a value, only if it is present. If it is not present, false
+will be returned.
+
 #### `Get(key string) interface{}`
 
 Gets the value for the given key.
