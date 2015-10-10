@@ -33,19 +33,18 @@ func TestMemoryAdd(t *testing.T) {
 		t.FailNow()
 	}
 
-	if cache.Get("key1") != "value1" {
-		t.Errorf("Expecting `key1` to equal `value1`")
-		t.FailNow()
-	}
+	compare(t, cache, "key1", "value1")
 }
 
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	cache.Set("key1", "value", 0)
-	if cache.Get("key1") != "value" {
-		t.Errorf("Expecting `key1` to be `value`")
-		t.Fail()
+	cache.Set("key1", "value1", 0)
+	compare(t, cache, "key1", "value1")
+
+	if _, ok := cache.Get("key2"); ok {
+		t.Errorf("Key2 is not present, ok should be false.")
+		t.FailNow()
 	}
 }
 
@@ -53,16 +52,13 @@ func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
 	cache.Set("key1", "value1", 0)
-	if cache.Get("key1") != "value1" {
-		t.Errorf("Expecting `key1` to equal `value1`")
-		t.Fail()
-	}
+	compare(t, cache, "key1", "value1")
 
 	if !cache.Flush() {
 		t.Fail()
 	}
 
-	if cache.Get("key1") != nil {
+	if v, _ := cache.Get("key1"); v != nil {
 		t.Errorf("Expecting `key1` to be nil")
 		t.Fail()
 	}
@@ -70,13 +66,6 @@ func TestMemoryFlush(t *testing.T) {
 
 func TestLimit(t *testing.T) {
 	cache := cacher.NewMemoryCache(250)
-
-	compare := func(t *testing.T, cache cacher.Cacher, key, value string) {
-		if cache.Get(key) != value {
-			t.Errorf("Expected `" + key + "` to equal `" + value + "`")
-			t.FailNow()
-		}
-	}
 
 	cache.Add("key1", "value1", 0)
 	cache.Add("key2", "value2", 0)
@@ -92,10 +81,7 @@ func TestLimit(t *testing.T) {
 
 	cache.Add("key6", "value6", 0)
 
-	if cache.Get("key1") != nil {
-		t.Errorf("Expected key1 to be removed from the list")
-		t.FailNow()
-	}
+	compare(t, cache, "key1", nil)
 
 	cache.Delete("key3")
 	cache.Add("key7", "value7", 0)
@@ -103,15 +89,16 @@ func TestLimit(t *testing.T) {
 
 	cache.Add("key8", "value8", 0)
 
-	if cache.Get("key2") != nil {
-		t.Errorf("Expected key2 to be removed from the list")
-		t.FailNow()
-	}
+	compare(t, cache, "key2", nil)
 
 	cache.Add("key9", "value9", 0)
 
-	if cache.Get("key4") != nil {
-		t.Errorf("Expected key4 to be removed from the list")
+	compare(t, cache, "key4", nil)
+}
+
+func compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
+	if v, _ := cache.Get(key); v != value {
+		t.Errorf("Expected `" + key + "` to equal `" + value.(string) + "`")
 		t.FailNow()
 	}
 }

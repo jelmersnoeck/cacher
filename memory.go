@@ -77,8 +77,12 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 }
 
 // Get gets the value out of the map associated with the provided key.
-func (c *MemoryCache) Get(key string) interface{} {
-	return c.items[key].value
+func (c *MemoryCache) Get(key string) (interface{}, bool) {
+	if c.exists(key) {
+		return c.items[key].value, true
+	}
+
+	return nil, false
 }
 
 // Flush will remove all the items from the hash.
