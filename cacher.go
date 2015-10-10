@@ -5,8 +5,6 @@
 // Package cacher provides a uniform interface for different caching strategies.
 package cacher
 
-import "time"
-
 // Cacher is the Caching interface that uniforms all the different strategies.
 type Cacher interface {
 	Add(key string, value interface{}, ttl int) bool
@@ -14,18 +12,4 @@ type Cacher interface {
 	Delete(key string) bool
 	Get(key string) interface{}
 	Flush() bool
-}
-
-type TimeNowF func() time.Time
-
-var TimeNow TimeNowF
-
-func init() {
-	ResetTimeNow()
-}
-
-func ResetTimeNow() {
-	TimeNow = func() time.Time {
-		return time.Now()
-	}
 }
