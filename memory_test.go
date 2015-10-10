@@ -81,7 +81,7 @@ func TestLimit(t *testing.T) {
 
 	cache.Add("key6", "value6", 0)
 
-	compare(t, cache, "key1", nil)
+	notPresent(t, cache, "key1")
 
 	cache.Delete("key3")
 	cache.Add("key7", "value7", 0)
@@ -89,16 +89,25 @@ func TestLimit(t *testing.T) {
 
 	cache.Add("key8", "value8", 0)
 
-	compare(t, cache, "key2", nil)
+	// This is key5 due to the fact that we fetched key2 before. This pushed it
+	// back as the most active key, so it wouldn't be deleted immediately.
+	notPresent(t, cache, "key4")
 
 	cache.Add("key9", "value9", 0)
 
-	compare(t, cache, "key4", nil)
+	notPresent(t, cache, "key5")
 }
 
 func compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
 	if v, _ := cache.Get(key); v != value {
 		t.Errorf("Expected `" + key + "` to equal `" + value.(string) + "`")
+		t.FailNow()
+	}
+}
+
+func notPresent(t *testing.T, cache cacher.Cacher, key string) {
+	if _, ok := cache.Get(key); ok {
+		t.Errorf("Expected `" + key + "` not to be present")
 		t.FailNow()
 	}
 }

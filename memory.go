@@ -72,6 +72,7 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 	c.items[key] = cachedItem{value, expiry, expire}
 	c.keys = append(c.keys, key)
 	c.size += unsafe.Sizeof(c.items[key])
+	c.lru(key)
 	c.evict()
 	return true
 }
@@ -123,11 +124,12 @@ func (c *MemoryCache) exists(key string) bool {
 	cachedItem, exists := c.items[key]
 	if exists {
 		if !cachedItem.expire || time.Now().Before(cachedItem.expiry) {
+			c.lru(key)
 			return true
 		}
 
+		// Item is expired, delete it and act as it doesn't exist
 		c.Delete(key)
-		return false
 	}
 
 	return false
@@ -140,6 +142,17 @@ func (c *MemoryCache) evict() {
 			c.removeAt(0)
 		} else {
 			break
+		}
+	}
+}
+
+// lru stands for Least Recently Used. We will use this algorithm to mark items
+// that are not active in our cache to be freed when the size is over its limit.
+func (c *MemoryCache) lru(key string) {
+	for i, v := range c.keys {
+		if v == key {
+			c.keys = append(c.keys[:i], c.keys[i+1:]...)
+			c.keys = append(c.keys, key)
 		}
 	}
 }
