@@ -20,6 +20,14 @@ Sets the value for the specified key, regardless of wether or not the key has
 already been set. If the key has already been set, it will overwrite the
 previous value.
 
+#### `Increment(key string, initial, offset, ttl int) bool`
+
+Increments the initial value - or cached value if present - by offset.
+
+#### `Decrement(key string, initial, offset, ttl int) bool`
+
+Decrements the initial value - or cached value if present - by offset.
+
 #### `Replace(key string, value interface{}, ttl int) bool`
 
 Replace will update a value, only if it is present. If it is not present, false
