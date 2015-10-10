@@ -49,7 +49,7 @@ func TestMemoryGet(t *testing.T) {
 	}
 }
 
-func TestMemroyFlush(t *testing.T) {
+func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache()
 
 	cache.Set("key1", "value1")
