@@ -9,18 +9,18 @@ worry about the implementation of said cache layer.
 
 ## Methods
 
-#### `Add(key string, value interface{}, ttl int) bool`
+#### `Add(key string, value []byte, ttl int) bool`
 
 Adds a new key to the cache if the key is not already stored. If the key is
 already stored false will be returned.
 
-#### `Set(key string, value interface{}, ttl int) bool`
+#### `Set(key string, value []byte, ttl int) bool`
 
 Sets the value for the specified key, regardless of wether or not the key has
 already been set. If the key has already been set, it will overwrite the
 previous value.
 
-#### `SetMulti(items map[string]interface{}, ttl int) map[string]bool`
+#### `SetMulti(items map[string][]byte, ttl int) map[string]bool`
 
 A shorthand to set multiple key/value combinations at a time. This uses `Set`
 internally to add the items to the cache.
@@ -33,16 +33,16 @@ Increments the initial value - or cached value if present - by offset.
 
 Decrements the initial value - or cached value if present - by offset.
 
-#### `Replace(key string, value interface{}, ttl int) bool`
+#### `Replace(key string, value []byte, ttl int) bool`
 
 Replace will update a value, only if it is present. If it is not present, false
 will be returned.
 
-#### `Get(key string) interface{}`
+#### `Get(key string) []byte`
 
 Gets the value for the given key.
 
-#### `GetMulti(keys []string) map[string]interface{}`
+#### `GetMulti(keys []string) map[string][]byte`
 
 Gets a list of values for a range of given keys. This uses `Get` internally.
 
