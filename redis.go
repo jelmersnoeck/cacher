@@ -173,13 +173,7 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 		return false
 	}
 
-	_, err := c.client.Do("INCRBY", key, offset)
-
-	if err != nil {
-		return false
-	}
-
-	return true
+	return c.Set(key, numbers.Int64Bytes(val), ttl)
 }
 
 func (c *RedisCache) exists(key string) bool {
