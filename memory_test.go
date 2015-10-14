@@ -1,6 +1,8 @@
 package cacher_test
 
 import (
+	"encoding/binary"
+	"strconv"
 	"testing"
 
 	"github.com/jelmersnoeck/cacher"
@@ -9,12 +11,12 @@ import (
 func TestMemorySet(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	if !cache.Set("key1", "value", 0) {
+	if !cache.Set("key1", []byte("value"), 0) {
 		t.Errorf("Expecting `key1` to be `value`")
 		t.Fail()
 	}
 
-	if !cache.Set("key2", 2, 0) {
+	if !cache.Set("key2", cacher.Int64Bytes(2), 0) {
 		t.Errorf("Expecting `key2` to be `2`")
 		t.Fail()
 	}
@@ -23,9 +25,9 @@ func TestMemorySet(t *testing.T) {
 func TestMemorySetMulti(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	items := map[string]interface{}{
-		"item1": 1,
-		"item2": "string",
+	items := map[string][]byte{
+		"item1": cacher.Int64Bytes(1),
+		"item2": []byte("string"),
 	}
 
 	cache.SetMulti(items, 0)
@@ -37,12 +39,12 @@ func TestMemorySetMulti(t *testing.T) {
 func TestMemoryAdd(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	if !cache.Add("key1", "value1", 0) {
+	if !cache.Add("key1", []byte("value1"), 0) {
 		t.Errorf("Expecting `key1` to be added to the cache")
 		t.FailNow()
 	}
 
-	if cache.Add("key1", "value2", 0) {
+	if cache.Add("key1", []byte("value2"), 0) {
 		t.Errorf("Expecting `key1` not to be added to the cache")
 		t.FailNow()
 	}
@@ -53,13 +55,13 @@ func TestMemoryAdd(t *testing.T) {
 func TestMemoryReplace(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	if cache.Replace("key1", "value1", 0) {
+	if cache.Replace("key1", []byte("value1"), 0) {
 		t.Errorf("Key1 is not set yet, should not be able to replace.")
 		t.FailNow()
 	}
 
-	cache.Set("key1", "value1", 0)
-	if !cache.Replace("key1", "value1", 0) {
+	cache.Set("key1", []byte("value1"), 0)
+	if !cache.Replace("key1", []byte("value1"), 0) {
 		t.Errorf("Key1 has been set, should be able to replace.")
 		t.FailNow()
 	}
@@ -74,7 +76,7 @@ func TestMemoryIncrement(t *testing.T) {
 	cache.Increment("key1", 0, 1, 0)
 	compare(t, cache, "key1", 1)
 
-	cache.Set("string", "value", 0)
+	cache.Set("string", []byte("value"), 0)
 	if cache.Increment("string", 0, 1, 0) {
 		t.Errorf("Can't increment a string value.")
 		t.FailNow()
@@ -100,7 +102,7 @@ func TestMemoryDecrement(t *testing.T) {
 	cache.Decrement("key1", 10, 1, 0)
 	compare(t, cache, "key1", 9)
 
-	cache.Set("string", "value", 0)
+	cache.Set("string", []byte("value"), 0)
 	if cache.Decrement("string", 0, 1, 0) {
 		t.Errorf("Can't decrement a string value.")
 		t.FailNow()
@@ -125,7 +127,7 @@ func TestMemoryDecrement(t *testing.T) {
 func TestMemoryGet(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	cache.Set("key1", "value1", 0)
+	cache.Set("key1", []byte("value1"), 0)
 	compare(t, cache, "key1", "value1")
 
 	if _, ok := cache.Get("key2"); ok {
@@ -137,9 +139,9 @@ func TestMemoryGet(t *testing.T) {
 func TestMemoryGetMulti(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	items := map[string]interface{}{
-		"item1": 1,
-		"item2": "string",
+	items := map[string][]byte{
+		"item1": cacher.Int64Bytes(1),
+		"item2": []byte("string"),
 	}
 
 	cache.SetMulti(items, 0)
@@ -151,12 +153,13 @@ func TestMemoryGetMulti(t *testing.T) {
 
 	values := cache.GetMulti(keys)
 
-	if values["item1"] != 1 {
+	_, val := binary.Varint(values["item1"])
+	if val != 1 {
 		t.Errorf("Expected `item1` to equal `1`")
 		t.FailNow()
 	}
 
-	if values["item2"] != "string" {
+	if string(values["item2"]) != "string" {
 		t.Errorf("Expected `item2` to equal `string`")
 		t.FailNow()
 	}
@@ -165,7 +168,7 @@ func TestMemoryGetMulti(t *testing.T) {
 func TestMemoryDelete(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	cache.Set("key1", "value1", 0)
+	cache.Set("key1", []byte("value1"), 0)
 	compare(t, cache, "key1", "value1")
 
 	cache.Delete("key1")
@@ -179,13 +182,13 @@ func TestMemoryDelete(t *testing.T) {
 func TestMemoryDeleteMulti(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	items := map[string]interface{}{
-		"item1": 1,
-		"item2": "string",
+	items := map[string][]byte{
+		"item1": cacher.Int64Bytes(1),
+		"item2": []byte("string"),
 	}
 
 	cache.SetMulti(items, 0)
-	cache.Set("key1", "value1", 0)
+	cache.Set("key1", []byte("value1"), 0)
 
 	var keys []string
 	for k, _ := range items {
@@ -210,7 +213,7 @@ func TestMemoryDeleteMulti(t *testing.T) {
 func TestMemoryFlush(t *testing.T) {
 	cache := cacher.NewMemoryCache(0)
 
-	cache.Set("key1", "value1", 0)
+	cache.Set("key1", []byte("value1"), 0)
 	compare(t, cache, "key1", "value1")
 
 	if !cache.Flush() {
@@ -224,13 +227,13 @@ func TestMemoryFlush(t *testing.T) {
 }
 
 func TestLimit(t *testing.T) {
-	cache := cacher.NewMemoryCache(250)
+	cache := cacher.NewMemoryCache(30)
 
-	cache.Add("key1", "value1", 0)
-	cache.Add("key2", "value2", 0)
-	cache.Add("key3", "value3", 0)
-	cache.Add("key4", "value4", 0)
-	cache.Add("key5", "value5", 0)
+	cache.Add("key1", []byte("value1"), 0)
+	cache.Add("key2", []byte("value2"), 0)
+	cache.Add("key3", []byte("value3"), 0)
+	cache.Add("key4", []byte("value4"), 0)
+	cache.Add("key5", []byte("value5"), 0)
 
 	compare(t, cache, "key1", "value1")
 	compare(t, cache, "key2", "value2")
@@ -238,29 +241,41 @@ func TestLimit(t *testing.T) {
 	compare(t, cache, "key4", "value4")
 	compare(t, cache, "key5", "value5")
 
-	cache.Add("key6", "value6", 0)
+	cache.Add("key6", []byte("value6"), 0)
 
 	notPresent(t, cache, "key1")
 
 	cache.Delete("key3")
-	cache.Add("key7", "value7", 0)
+	cache.Add("key7", []byte("value7"), 0)
 	compare(t, cache, "key2", "value2")
 
-	cache.Add("key8", "value8", 0)
+	cache.Add("key8", []byte("value8"), 0)
 
 	// This is key5 due to the fact that we fetched key2 before. This pushed it
 	// back as the most active key, so it wouldn't be deleted immediately.
 	notPresent(t, cache, "key4")
 
-	cache.Add("key9", "value9", 0)
+	cache.Add("key9", []byte("value9"), 0)
 
 	notPresent(t, cache, "key5")
 }
 
 func compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
-	if v, _ := cache.Get(key); v != value {
-		t.Errorf("Expected `" + key + "` to equal `" + value.(string) + "`")
-		t.FailNow()
+	_, ok := value.(int)
+	if ok {
+		val := int64(value.(int))
+		v, _ := cache.Get(key)
+		valInt, _ := cacher.BytesInt64(v)
+		if valInt != val {
+			t.Errorf("Expected `" + key + "` to equal `" + strconv.FormatInt(val, 10) + "`, is `" + strconv.FormatInt(valInt, 10) + "`")
+			t.FailNow()
+		}
+	} else {
+		value = value.(string)
+		if v, _ := cache.Get(key); string(v) != value {
+			t.Errorf("Expected `" + key + "` to equal `" + value.(string) + "`")
+			t.FailNow()
+		}
 	}
 }
 

@@ -7,11 +7,10 @@ package cacher
 import (
 	"runtime"
 	"time"
-	"unsafe"
 )
 
 type cachedItem struct {
-	value  interface{}
+	value  []byte
 	expiry time.Time
 	expire bool
 }
@@ -48,7 +47,7 @@ func NewMemoryCache(limit uintptr) *MemoryCache {
 //
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
 // the item will be cached infinitely.
-func (c *MemoryCache) Add(key string, value interface{}, ttl int) bool {
+func (c *MemoryCache) Add(key string, value []byte, ttl int64) bool {
 	if c.exists(key) {
 		return false
 	}
@@ -61,7 +60,7 @@ func (c *MemoryCache) Add(key string, value interface{}, ttl int) bool {
 //
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
 // the item will be cached infinitely.
-func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
+func (c *MemoryCache) Set(key string, value []byte, ttl int64) bool {
 	expiry := time.Now().Add(time.Duration(ttl) * time.Second)
 
 	var expire bool
@@ -71,7 +70,7 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 
 	c.items[key] = cachedItem{value, expiry, expire}
 	c.keys = append(c.keys, key)
-	c.size += unsafe.Sizeof(c.items[key]) // TODO: if already exists, don't add this all
+	c.size += uintptr(len(value)) // TODO: if already exists, don't add this all
 	c.lru(key)
 	c.evict()
 	return true
@@ -79,7 +78,7 @@ func (c *MemoryCache) Set(key string, value interface{}, ttl int) bool {
 
 // SetMulti sets multiple values for their respective keys. This is a shorthand
 // to use `Set` multiple times.
-func (c *MemoryCache) SetMulti(items map[string]interface{}, ttl int) map[string]bool {
+func (c *MemoryCache) SetMulti(items map[string][]byte, ttl int64) map[string]bool {
 	results := make(map[string]bool)
 	for key, value := range items {
 		results[key] = c.Set(key, value, ttl)
@@ -90,7 +89,7 @@ func (c *MemoryCache) SetMulti(items map[string]interface{}, ttl int) map[string
 
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
-func (c *MemoryCache) Replace(key string, value interface{}, ttl int) bool {
+func (c *MemoryCache) Replace(key string, value []byte, ttl int64) bool {
 	if !c.exists(key) {
 		return false
 	}
@@ -99,7 +98,7 @@ func (c *MemoryCache) Replace(key string, value interface{}, ttl int) bool {
 }
 
 // Get gets the value out of the map associated with the provided key.
-func (c *MemoryCache) Get(key string) (interface{}, bool) {
+func (c *MemoryCache) Get(key string) ([]byte, bool) {
 	if c.exists(key) {
 		return c.items[key].value, true
 	}
@@ -109,8 +108,8 @@ func (c *MemoryCache) Get(key string) (interface{}, bool) {
 
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
-func (c *MemoryCache) GetMulti(keys []string) map[string]interface{} {
-	items := make(map[string]interface{})
+func (c *MemoryCache) GetMulti(keys []string) map[string][]byte {
+	items := make(map[string][]byte)
 
 	for _, k := range keys {
 		items[k], _ = c.Get(k)
@@ -121,7 +120,7 @@ func (c *MemoryCache) GetMulti(keys []string) map[string]interface{} {
 
 // Increment adds a value of offset to the initial value. If the initial value
 // is already set, it will be added to the value currently stored in the cache.
-func (c *MemoryCache) Increment(key string, initial, offset, ttl int) bool {
+func (c *MemoryCache) Increment(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false
 	}
@@ -132,7 +131,7 @@ func (c *MemoryCache) Increment(key string, initial, offset, ttl int) bool {
 // Decrement subtracts a value of offset to the initial value. If the initial
 // value is already set, it will be added to the value currently stored in the
 // cache.
-func (c *MemoryCache) Decrement(key string, initial, offset, ttl int) bool {
+func (c *MemoryCache) Decrement(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false
 	}
@@ -177,7 +176,7 @@ func (c *MemoryCache) DeleteMulti(keys []string) map[string]bool {
 func (c *MemoryCache) removeAt(index int) bool {
 	key := c.keys[index]
 	c.keys = append(c.keys[:index], c.keys[index+1:]...)
-	c.size -= unsafe.Sizeof(c.items[key])
+	c.size -= uintptr(len(c.items[key].value))
 	delete(c.items, key)
 
 	return true
@@ -187,12 +186,13 @@ func (c *MemoryCache) removeAt(index int) bool {
 // Decrement. If the key isn't set before, we will set the initial value. If
 // there is a value present, we will add the given offset to that value and
 // update the value with the new TTL.
-func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int) bool {
+func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	if !c.exists(key) {
-		return c.Set(key, initial, ttl)
+		return c.Set(key, Int64Bytes(initial), ttl)
 	}
 
-	val, ok := c.items[key].value.(int)
+	val, ok := BytesInt64(c.items[key].value)
+
 	if !ok {
 		return false
 	}
@@ -202,7 +202,7 @@ func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int) bool
 		return false
 	}
 
-	return c.Set(key, val, ttl)
+	return c.Set(key, Int64Bytes(val), ttl)
 }
 
 // exists checks if a key is stored in the cache.
