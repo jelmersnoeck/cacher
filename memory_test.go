@@ -7,7 +7,7 @@ import (
 	"github.com/jelmersnoeck/cacher/internal/tester"
 )
 
-func TestCollection(t *testing.T) {
+func TestMemoryCollection(t *testing.T) {
 	tester.RunCacher(t, cacher.NewMemoryCache(0))
 }
 
