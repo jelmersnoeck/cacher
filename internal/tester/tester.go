@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/jelmersnoeck/cacher"
+	"github.com/jelmersnoeck/cacher/internal/numbers"
 )
 
 func RunCacher(t *testing.T, cacher cacher.Cacher) {
@@ -63,7 +64,7 @@ func TestSet(t *testing.T, cache cacher.Cacher) {
 		t.Fail()
 	}
 
-	if !cache.Set("key2", cacher.Int64Bytes(2), 0) {
+	if !cache.Set("key2", numbers.Int64Bytes(2), 0) {
 		t.Errorf("Expecting `key2` to be `2`")
 		t.Fail()
 	}
@@ -71,7 +72,7 @@ func TestSet(t *testing.T, cache cacher.Cacher) {
 
 func TestSetMulti(t *testing.T, cache cacher.Cacher) {
 	items := map[string][]byte{
-		"item1": cacher.Int64Bytes(1),
+		"item1": numbers.Int64Bytes(1),
 		"item2": []byte("string"),
 	}
 
@@ -159,7 +160,7 @@ func TestGet(t *testing.T, cache cacher.Cacher) {
 
 func TestGetMulti(t *testing.T, cache cacher.Cacher) {
 	items := map[string][]byte{
-		"item1": cacher.Int64Bytes(1),
+		"item1": numbers.Int64Bytes(1),
 		"item2": []byte("string"),
 	}
 
@@ -198,7 +199,7 @@ func TestDelete(t *testing.T, cache cacher.Cacher) {
 
 func TestDeleteMulti(t *testing.T, cache cacher.Cacher) {
 	items := map[string][]byte{
-		"item1": cacher.Int64Bytes(1),
+		"item1": numbers.Int64Bytes(1),
 		"item2": []byte("string"),
 	}
 
@@ -244,7 +245,7 @@ func Compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
 	if ok {
 		val := int64(value.(int))
 		v, _ := cache.Get(key)
-		valInt, _ := cacher.BytesInt64(v)
+		valInt, _ := numbers.BytesInt64(v)
 		if valInt != val {
 			t.Errorf("Expected `" + key + "` to equal `" + strconv.FormatInt(val, 10) + "`, is `" + strconv.FormatInt(valInt, 10) + "`")
 			t.FailNow()

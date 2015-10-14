@@ -4,7 +4,10 @@
 
 package cacher
 
-import "github.com/garyburd/redigo/redis"
+import (
+	"github.com/garyburd/redigo/redis"
+	"github.com/jelmersnoeck/cacher/internal/numbers"
+)
 
 // RedisCache is a caching implementation that stores the data in memory. The
 // cache will be emptied when the application has run.
@@ -155,11 +158,11 @@ func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
 // update the value with the new TTL.
 func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	if !c.exists(key) {
-		return c.Set(key, Int64Bytes(initial), ttl)
+		return c.Set(key, numbers.Int64Bytes(initial), ttl)
 	}
 
 	getValue, _ := c.Get(key)
-	val, ok := BytesInt64(getValue)
+	val, ok := numbers.BytesInt64(getValue)
 
 	if !ok {
 		return false

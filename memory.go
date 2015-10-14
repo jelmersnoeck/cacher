@@ -7,6 +7,8 @@ package cacher
 import (
 	"runtime"
 	"time"
+
+	"github.com/jelmersnoeck/cacher/internal/numbers"
 )
 
 type cachedItem struct {
@@ -188,10 +190,10 @@ func (c *MemoryCache) removeAt(index int) bool {
 // update the value with the new TTL.
 func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	if !c.exists(key) {
-		return c.Set(key, Int64Bytes(initial), ttl)
+		return c.Set(key, numbers.Int64Bytes(initial), ttl)
 	}
 
-	val, ok := BytesInt64(c.items[key].value)
+	val, ok := numbers.BytesInt64(c.items[key].value)
 
 	if !ok {
 		return false
@@ -202,7 +204,7 @@ func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bo
 		return false
 	}
 
-	return c.Set(key, Int64Bytes(val), ttl)
+	return c.Set(key, numbers.Int64Bytes(val), ttl)
 }
 
 // exists checks if a key is stored in the cache.
