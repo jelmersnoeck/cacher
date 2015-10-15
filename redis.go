@@ -157,7 +157,11 @@ func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
 // there is a value present, we will add the given offset to that value and
 // update the value with the new TTL.
 func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) bool {
+	c.client.Do("WATCH", key)
+
 	if !c.exists(key) {
+		c.client.Do("MULTI")
+		defer c.client.Do("EXEC")
 		return c.Set(key, numbers.Int64Bytes(initial), ttl)
 	}
 
@@ -167,6 +171,9 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 	if !ok {
 		return false
 	}
+
+	c.client.Do("MULTI")
+	defer c.client.Do("EXEC")
 
 	val += offset
 	if val < 0 {
