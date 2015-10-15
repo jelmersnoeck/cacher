@@ -89,10 +89,19 @@ func (c *RedisCache) Get(key string) ([]byte, bool) {
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
 func (c *RedisCache) GetMulti(keys []string) map[string][]byte {
+	var args []interface{}
+	for _, key := range keys {
+		args = append(args, key)
+	}
+
+	cValues, err := c.client.Do("MGET", args...)
 	items := make(map[string][]byte)
 
-	for _, key := range keys {
-		items[key], _ = c.Get(key)
+	if err == nil {
+		values := cValues.([]interface{})
+		for i, val := range values {
+			items[keys[i]] = val.([]byte)
+		}
 	}
 
 	return items
