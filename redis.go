@@ -61,9 +61,11 @@ func (c *RedisCache) Set(key string, value []byte, ttl int64) bool {
 func (c *RedisCache) SetMulti(items map[string][]byte, ttl int64) map[string]bool {
 	results := make(map[string]bool)
 
+	c.client.Do("MULTI")
 	for key, value := range items {
 		results[key] = c.Set(key, value, ttl)
 	}
+	c.client.Do("EXEC")
 
 	return results
 }
