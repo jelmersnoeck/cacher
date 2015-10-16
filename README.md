@@ -69,3 +69,28 @@ terminates.
 
 This cache is perfect to use for testing. There are no other dependencies
 required other than enough available memory.
+
+#### Usage
+
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/jelmersnoeck/cacher/memory"
+)
+
+func main() {
+	cache := memory.New(30)
+	cache.Add("key1", []byte("value1"), 0)
+
+    v, ok := cache.Get("key1")
+
+    if ok {
+        fmt.Println(v)
+    } else {
+        fmt.Println("Something went wrong")
+    }
+}
+```
