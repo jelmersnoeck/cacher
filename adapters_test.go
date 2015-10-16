@@ -13,6 +13,8 @@ import (
 	"github.com/jelmersnoeck/cacher"
 	"github.com/jelmersnoeck/cacher/internal/numbers"
 	"github.com/jelmersnoeck/cacher/internal/tests"
+	"github.com/jelmersnoeck/cacher/memory"
+	rcache "github.com/jelmersnoeck/cacher/redis"
 )
 
 func TestAdd(t *testing.T) {
@@ -252,10 +254,10 @@ func TestFlush(t *testing.T) {
 
 func testDrivers() []cacher.Cacher {
 	drivers := make([]cacher.Cacher, 0)
-	drivers = append(drivers, cacher.NewMemoryCache(0))
+	drivers = append(drivers, memory.New(0))
 
 	c, _ := redis.Dial("tcp", ":6379")
-	redisCache := cacher.NewRedisCache(c)
+	redisCache := rcache.New(c)
 	drivers = append(drivers, redisCache)
 
 	return drivers

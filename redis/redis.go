@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style license that can be found
 // in the LICENSE file.
 
-package cacher
+package redis
 
 import (
 	"github.com/garyburd/redigo/redis"
@@ -17,7 +17,7 @@ type RedisCache struct {
 
 // NewRedisCache creates a new instance of RedisCache and initiates the
 // storage map.
-func NewRedisCache(client redis.Conn) *RedisCache {
+func New(client redis.Conn) *RedisCache {
 	cache := new(RedisCache)
 	cache.client = client
 

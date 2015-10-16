@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT-style license that can be found
 // in the LICENSE file.
 
-package cacher
+package memory
 
 import (
 	"runtime"
@@ -28,7 +28,7 @@ type MemoryCache struct {
 
 // NewMemoryCache creates a new instance of MemoryCache and initiates the
 // storage map.
-func NewMemoryCache(limit uintptr) *MemoryCache {
+func New(limit uintptr) *MemoryCache {
 	cache := new(MemoryCache)
 	cache.items = make(map[string]cachedItem)
 	if limit == 0 {

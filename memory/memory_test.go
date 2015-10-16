@@ -2,17 +2,17 @@
 // Use of this source code is governed by a MIT-style license that can be found
 // in the LICENSE file.
 
-package cacher_test
+package memory_test
 
 import (
 	"testing"
 
-	"github.com/jelmersnoeck/cacher"
 	"github.com/jelmersnoeck/cacher/internal/tests"
+	"github.com/jelmersnoeck/cacher/memory"
 )
 
 func TestLimit(t *testing.T) {
-	cache := cacher.NewMemoryCache(30)
+	cache := memory.New(30)
 
 	cache.Add("key1", []byte("value1"), 0)
 	cache.Add("key2", []byte("value2"), 0)
