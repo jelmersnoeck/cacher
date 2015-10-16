@@ -174,7 +174,7 @@ func TestGetMulti(t *testing.T) {
 			keys = append(keys, k)
 		}
 
-		values := cache.GetMulti(keys)
+		values, _ := cache.GetMulti(keys)
 
 		_, val := binary.Varint(values["item1"])
 		if val != 1 {

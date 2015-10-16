@@ -110,14 +110,15 @@ func (c *MemoryCache) Get(key string) ([]byte, bool) {
 
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
-func (c *MemoryCache) GetMulti(keys []string) map[string][]byte {
+func (c *MemoryCache) GetMulti(keys []string) (map[string][]byte, map[string]bool) {
 	items := make(map[string][]byte)
+	bools := make(map[string]bool)
 
 	for _, k := range keys {
-		items[k], _ = c.Get(k)
+		items[k], bools[k] = c.Get(k)
 	}
 
-	return items
+	return items, bools
 }
 
 // Increment adds a value of offset to the initial value. If the initial value

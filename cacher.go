@@ -16,6 +16,6 @@ type Cacher interface {
 	Delete(key string) bool
 	DeleteMulti(keys []string) map[string]bool
 	Get(key string) ([]byte, bool)
-	GetMulti(keys []string) map[string][]byte
+	GetMulti(keys []string) (map[string][]byte, map[string]bool)
 	Flush() bool
 }
