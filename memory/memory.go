@@ -8,13 +8,14 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/jelmersnoeck/cacher/internal/numbers"
+	"github.com/jelmersnoeck/cacher/internal/encoding"
 )
 
 type cachedItem struct {
 	value  []byte
 	expiry time.Time
 	expire bool
+	token  string
 }
 
 // MemoryCache is a caching implementation that stores the data in memory. The
@@ -70,7 +71,7 @@ func (c *MemoryCache) Set(key string, value []byte, ttl int64) bool {
 		expire = true
 	}
 
-	c.items[key] = cachedItem{value, expiry, expire}
+	c.items[key] = cachedItem{value, expiry, expire, encoding.Md5Sum(value)}
 	c.keys = append(c.keys, key)
 	c.size += uintptr(len(value)) // TODO: if already exists, don't add this all
 	c.lru(key)
@@ -100,25 +101,26 @@ func (c *MemoryCache) Replace(key string, value []byte, ttl int64) bool {
 }
 
 // Get gets the value out of the map associated with the provided key.
-func (c *MemoryCache) Get(key string) ([]byte, bool) {
+func (c *MemoryCache) Get(key string) ([]byte, string, bool) {
 	if c.exists(key) {
-		return c.items[key].value, true
+		return c.items[key].value, c.items[key].token, true
 	}
 
-	return nil, false
+	return nil, "", false
 }
 
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
-func (c *MemoryCache) GetMulti(keys []string) (map[string][]byte, map[string]bool) {
+func (c *MemoryCache) GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool) {
 	items := make(map[string][]byte)
 	bools := make(map[string]bool)
+	tokens := make(map[string]string)
 
 	for _, k := range keys {
-		items[k], bools[k] = c.Get(k)
+		items[k], tokens[k], bools[k] = c.Get(k)
 	}
 
-	return items, bools
+	return items, tokens, bools
 }
 
 // Increment adds a value of offset to the initial value. If the initial value
@@ -191,10 +193,10 @@ func (c *MemoryCache) removeAt(index int) bool {
 // update the value with the new TTL.
 func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	if !c.exists(key) {
-		return c.Set(key, numbers.Int64Bytes(initial), ttl)
+		return c.Set(key, encoding.Int64Bytes(initial), ttl)
 	}
 
-	val, ok := numbers.BytesInt64(c.items[key].value)
+	val, ok := encoding.BytesInt64(c.items[key].value)
 
 	if !ok {
 		return false
@@ -205,7 +207,7 @@ func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bo
 		return false
 	}
 
-	return c.Set(key, numbers.Int64Bytes(val), ttl)
+	return c.Set(key, encoding.Int64Bytes(val), ttl)
 }
 
 // exists checks if a key is stored in the cache.

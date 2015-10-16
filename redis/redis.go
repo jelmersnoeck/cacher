@@ -6,7 +6,7 @@ package redis
 
 import (
 	"github.com/garyburd/redigo/redis"
-	"github.com/jelmersnoeck/cacher/internal/numbers"
+	"github.com/jelmersnoeck/cacher/internal/encoding"
 )
 
 // RedisCache is a caching implementation that stores the data in memory. The
@@ -81,28 +81,29 @@ func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {
 }
 
 // Get gets the value out of the map associated with the provided key.
-func (c *RedisCache) Get(key string) ([]byte, bool) {
+func (c *RedisCache) Get(key string) ([]byte, string, bool) {
 	value, _ := c.client.Do("GET", key)
 
 	if value == nil {
-		return []byte{}, false
+		return []byte{}, "", false
 	}
 
 	val, ok := value.([]byte)
 
 	if !ok {
-		return nil, false
+		return nil, "", false
 	}
 
-	return val, true
+	return val, encoding.Md5Sum(val), true
 }
 
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
-func (c *RedisCache) GetMulti(keys []string) (map[string][]byte, map[string]bool) {
+func (c *RedisCache) GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool) {
 	cValues, err := c.client.Do("MGET", keyArgs(keys)...)
 	items := make(map[string][]byte)
 	bools := make(map[string]bool)
+	tokens := make(map[string]string)
 
 	for _, v := range keys {
 		bools[v] = false
@@ -112,11 +113,12 @@ func (c *RedisCache) GetMulti(keys []string) (map[string][]byte, map[string]bool
 		values := cValues.([]interface{})
 		for i, val := range values {
 			items[keys[i]] = val.([]byte)
+			tokens[keys[i]] = encoding.Md5Sum(items[keys[i]])
 			bools[keys[i]] = true
 		}
 	}
 
-	return items, bools
+	return items, tokens, bools
 }
 
 // Increment adds a value of offset to the initial value. If the initial value
@@ -164,7 +166,7 @@ func (c *RedisCache) Delete(key string) bool {
 // method internally to do so. It will return a map of results to see if the
 // deletion is successful.
 func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
-	items, _ := c.GetMulti(keys)
+	items, _, _ := c.GetMulti(keys)
 	c.client.Do("DEL", keyArgs(keys)...)
 
 	results := make(map[string]bool)
@@ -185,11 +187,11 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 	if !c.exists(key) {
 		c.client.Do("MULTI")
 		defer c.client.Do("EXEC")
-		return c.Set(key, numbers.Int64Bytes(initial), ttl)
+		return c.Set(key, encoding.Int64Bytes(initial), ttl)
 	}
 
-	getValue, _ := c.Get(key)
-	val, ok := numbers.BytesInt64(getValue)
+	getValue, _, _ := c.Get(key)
+	val, ok := encoding.BytesInt64(getValue)
 
 	if !ok {
 		return false
@@ -203,7 +205,7 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 		return false
 	}
 
-	return c.Set(key, numbers.Int64Bytes(val), ttl)
+	return c.Set(key, encoding.Int64Bytes(val), ttl)
 }
 
 func (c *RedisCache) exists(key string) bool {

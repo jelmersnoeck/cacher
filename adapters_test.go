@@ -11,7 +11,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/jelmersnoeck/cacher"
-	"github.com/jelmersnoeck/cacher/internal/numbers"
+	"github.com/jelmersnoeck/cacher/internal/encoding"
 	"github.com/jelmersnoeck/cacher/internal/tests"
 	"github.com/jelmersnoeck/cacher/memory"
 	rcache "github.com/jelmersnoeck/cacher/redis"
@@ -36,7 +36,7 @@ func TestAdd(t *testing.T) {
 func TestSet(t *testing.T) {
 	values := map[string][]byte{
 		"key1": []byte("value"),
-		"key2": numbers.Int64Bytes(2),
+		"key2": encoding.Int64Bytes(2),
 	}
 
 	for _, cache := range testDrivers() {
@@ -45,14 +45,14 @@ func TestSet(t *testing.T) {
 				tests.FailMsg(t, cache, "Expecting `key1` to be `value`")
 			}
 
-			val, _ := cache.Get(key)
+			val, _, _ := cache.Get(key)
 			if !reflect.DeepEqual(val, value) {
 				tests.FailMsg(t, cache, "Value for key `"+key+"` does not match.")
 			}
 		}
 
 		cache.Set("key1", []byte("value"), -1)
-		_, ok := cache.Get("key1")
+		_, _, ok := cache.Get("key1")
 
 		if ok {
 			tests.FailMsg(t, cache, "key1 should be deleted with negative value")
@@ -65,7 +65,7 @@ func TestSet(t *testing.T) {
 func TestSetMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -152,7 +152,7 @@ func TestGet(t *testing.T) {
 		cache.Set("key1", []byte("value1"), 0)
 		tests.Compare(t, cache, "key1", "value1")
 
-		if _, ok := cache.Get("key2"); ok {
+		if _, _, ok := cache.Get("key2"); ok {
 			tests.FailMsg(t, cache, "Key2 is not present, ok should be false.")
 		}
 
@@ -163,7 +163,7 @@ func TestGet(t *testing.T) {
 func TestGetMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -174,7 +174,7 @@ func TestGetMulti(t *testing.T) {
 			keys = append(keys, k)
 		}
 
-		values, _ := cache.GetMulti(keys)
+		values, _, _ := cache.GetMulti(keys)
 
 		_, val := binary.Varint(values["item1"])
 		if val != 1 {
@@ -196,7 +196,7 @@ func TestDelete(t *testing.T) {
 
 		cache.Delete("key1")
 
-		if _, ok := cache.Get("key1"); ok {
+		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "`key1` should be deleted from the cache.")
 		}
 
@@ -207,7 +207,7 @@ func TestDelete(t *testing.T) {
 func TestDeleteMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -221,11 +221,11 @@ func TestDeleteMulti(t *testing.T) {
 
 		cache.DeleteMulti(keys)
 
-		if _, ok := cache.Get("item1"); ok {
+		if _, _, ok := cache.Get("item1"); ok {
 			tests.FailMsg(t, cache, "`item1` should be deleted from the cache.")
 		}
 
-		if _, ok := cache.Get("item2"); ok {
+		if _, _, ok := cache.Get("item2"); ok {
 			tests.FailMsg(t, cache, "`item2` should be deleted from the cache.")
 		}
 
@@ -244,7 +244,7 @@ func TestFlush(t *testing.T) {
 			tests.FailMsg(t, cache, "Cache should be able to flush")
 		}
 
-		if _, ok := cache.Get("key1"); ok {
+		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "Expecting `key1` to be nil")
 		}
 

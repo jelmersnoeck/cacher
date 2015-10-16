@@ -11,22 +11,22 @@ import (
 	"testing"
 
 	"github.com/jelmersnoeck/cacher"
-	"github.com/jelmersnoeck/cacher/internal/numbers"
+	"github.com/jelmersnoeck/cacher/internal/encoding"
 )
 
 func Compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
 	_, ok := value.(int)
 	if ok {
 		val := int64(value.(int))
-		v, _ := cache.Get(key)
-		valInt, _ := numbers.BytesInt64(v)
+		v, _, _ := cache.Get(key)
+		valInt, _ := encoding.BytesInt64(v)
 		if valInt != val {
 			msg := "Expected `" + key + "` to equal `" + strconv.FormatInt(val, 10) + "`, is `" + strconv.FormatInt(valInt, 10) + "`"
 			FailMsg(t, cache, msg)
 		}
 	} else {
 		value = value.(string)
-		if v, _ := cache.Get(key); string(v) != value {
+		if v, _, _ := cache.Get(key); string(v) != value {
 			msg := "Expected `" + key + "` to equal `" + value.(string) + "`"
 			FailMsg(t, cache, msg)
 		}
@@ -34,7 +34,7 @@ func Compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
 }
 
 func NotPresent(t *testing.T, cache cacher.Cacher, key string) {
-	if _, ok := cache.Get(key); ok {
+	if _, _, ok := cache.Get(key); ok {
 		FailMsg(t, cache, "Expected `"+key+"` not to be present")
 	}
 }
