@@ -49,6 +49,13 @@ func TestSet(t *testing.T) {
 			}
 		}
 
+		cache.Set("key1", []byte("value"), -1)
+		_, ok := cache.Get("key1")
+
+		if ok {
+			tests.FailMsg(t, cache, "key1 should be deleted with negative value")
+		}
+
 		cache.Flush()
 	}
 }
@@ -235,7 +242,7 @@ func TestFlush(t *testing.T) {
 			tests.FailMsg(t, cache, "Cache should be able to flush")
 		}
 
-		if v, _ := cache.Get("key1"); v != nil {
+		if _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "Expecting `key1` to be nil")
 		}
 

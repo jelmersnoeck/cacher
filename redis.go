@@ -43,13 +43,17 @@ func (c *RedisCache) Add(key string, value []byte, ttl int64) bool {
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
 // the item will be cached infinitely.
 func (c *RedisCache) Set(key string, value []byte, ttl int64) bool {
+	var err error
+
 	if ttl > 0 {
-		c.client.Do("SETEX", key, ttl, value)
+		_, err = c.client.Do("SETEX", key, ttl, value)
+	} else if ttl == 0 {
+		_, err = c.client.Do("SET", key, value)
 	} else {
-		c.client.Do("SET", key, value)
+		return c.Delete(key)
 	}
 
-	return true
+	return err == nil
 }
 
 // SetMulti sets multiple values for their respective keys. This is a shorthand
@@ -77,6 +81,11 @@ func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {
 // Get gets the value out of the map associated with the provided key.
 func (c *RedisCache) Get(key string) ([]byte, bool) {
 	value, _ := c.client.Do("GET", key)
+
+	if value == nil {
+		return []byte{}, false
+	}
+
 	val, ok := value.([]byte)
 
 	if !ok {
@@ -130,9 +139,9 @@ func (c *RedisCache) Decrement(key string, initial, offset, ttl int64) bool {
 
 // Flush will remove all the items from the hash.
 func (c *RedisCache) Flush() bool {
-	c.client.Do("FLUSHDB")
+	_, err := c.client.Do("FLUSHDB")
 
-	return true
+	return err == nil
 }
 
 // Delete will validate if the key actually is stored in the cache. If it is

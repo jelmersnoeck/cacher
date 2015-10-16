@@ -66,7 +66,7 @@ func (c *MemoryCache) Set(key string, value []byte, ttl int64) bool {
 	expiry := time.Now().Add(time.Duration(ttl) * time.Second)
 
 	var expire bool
-	if ttl > 0 {
+	if ttl != 0 {
 		expire = true
 	}
 
