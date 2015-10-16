@@ -160,6 +160,22 @@ func TestGet(t *testing.T) {
 	}
 }
 
+func TestGetToken(t *testing.T) {
+	for _, cache := range testDrivers() {
+		cache.Set("key1", []byte("value1"), 0)
+		_, token1, _ := cache.Get("key1")
+
+		cache.Set("key1", []byte("value2"), 0)
+		_, token2, _ := cache.Get("key1")
+
+		if token1 == token2 {
+			tests.FailMsg(t, cache, "token1 should not equal token2.")
+		}
+
+		cache.Flush()
+	}
+}
+
 func TestGetMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
@@ -174,11 +190,19 @@ func TestGetMulti(t *testing.T) {
 			keys = append(keys, k)
 		}
 
-		values, _, _ := cache.GetMulti(keys)
+		values, tokens, bools := cache.GetMulti(keys)
 
 		_, val := binary.Varint(values["item1"])
 		if val != 1 {
 			tests.FailMsg(t, cache, "Expected `item1` to equal `1`")
+		}
+
+		if !bools["item1"] {
+			tests.FailMsg(t, cache, "Expected `item1` to be ok.")
+		}
+
+		if tokens["item1"] == "" {
+			tests.FailMsg(t, cache, "Expected `item1` to have a valid token.")
 		}
 
 		if string(values["item2"]) != "string" {
