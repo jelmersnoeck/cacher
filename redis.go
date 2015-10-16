@@ -98,12 +98,7 @@ func (c *RedisCache) Get(key string) ([]byte, bool) {
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
 func (c *RedisCache) GetMulti(keys []string) map[string][]byte {
-	var args []interface{}
-	for _, key := range keys {
-		args = append(args, key)
-	}
-
-	cValues, err := c.client.Do("MGET", args...)
+	cValues, err := c.client.Do("MGET", keyArgs(keys)...)
 	items := make(map[string][]byte)
 
 	if err == nil {
@@ -161,10 +156,12 @@ func (c *RedisCache) Delete(key string) bool {
 // method internally to do so. It will return a map of results to see if the
 // deletion is successful.
 func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
-	results := make(map[string]bool)
+	items := c.GetMulti(keys)
+	c.client.Do("DEL", keyArgs(keys)...)
 
+	results := make(map[string]bool)
 	for _, v := range keys {
-		results[v] = c.Delete(v)
+		_, results[v] = items[v]
 	}
 
 	return results
@@ -209,4 +206,13 @@ func (c *RedisCache) exists(key string) bool {
 	}
 
 	return false
+}
+
+func keyArgs(keys []string) []interface{} {
+	var args []interface{}
+	for _, key := range keys {
+		args = append(args, key)
+	}
+
+	return args
 }
