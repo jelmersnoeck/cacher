@@ -94,3 +94,35 @@ func main() {
     }
 }
 ```
+
+### RedisCache
+
+RedisCache stores all the data in a Redis instance. This cache relies on the
+`github.com/garyburd/redigo/redis` package to communicate with Redis.
+
+#### Usage
+
+```go
+package main
+
+import (
+    "fmt"
+
+	"github.com/garyburd/redigo/redis"
+	rcache "github.com/jelmersnoeck/cacher/redis"
+)
+
+func main() {
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
+	cache.Add("key1", []byte("value1"), 0)
+
+    v, ok := cache.Get("key1")
+
+    if ok {
+        fmt.Println(v)
+    } else {
+        fmt.Println("Something went wrong")
+    }
+}
+```
