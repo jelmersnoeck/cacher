@@ -1,6 +1,6 @@
 # Cacher
 
-[![TravisCI](https://travis-ci.org/jelmersnoeck/cacher.svg)](https://travis-ci.org/jelmersnoeck/cacher)[![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher)
+[![TravisCI](https://travis-ci.org/jelmersnoeck/cacher.svg)](https://travis-ci.org/jelmersnoeck/cacher) [![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher)
 
 Cacher is a port of the PHP library [Scrapbook](https://github.com/matthiasmullie/scrapbook).
 
@@ -10,6 +10,8 @@ worry about the implementation of said cache layer.
 ## Implementations
 
 ### MemoryCache
+
+[![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher/memory?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher/memory)
 
 MemoryCache stores all the data in memory. This is a non persistent cache store
 that will be flushed every time the application that uses the cache is
@@ -44,6 +46,8 @@ func main() {
 ```
 
 ### RedisCache
+
+[![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher/redis?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher/redis)
 
 RedisCache stores all the data in a Redis instance. This cache relies on the
 `github.com/garyburd/redigo/redis` package to communicate with Redis.
