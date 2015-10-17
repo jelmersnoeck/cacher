@@ -47,8 +47,7 @@ func New(limit uintptr) *Cache {
 // Add an item to the cache. If the item is already cached, the value won't be
 // overwritten.
 //
-// ttl defines the number of seconds the value should be cached. If ttl is 0,
-// the item will be cached infinitely.
+// See the `Set()` function for ttl information.
 func (c *Cache) Add(key string, value []byte, ttl int64) bool {
 	if c.exists(key) {
 		return false
@@ -61,12 +60,15 @@ func (c *Cache) Add(key string, value []byte, ttl int64) bool {
 // already cached.
 //
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
-// the item will be cached infinitely.
+// the item will be cached infinitely. If ttl is < 0, the value will be deleted
+// from the cache using the `Delete()` function.
 func (c *Cache) Set(key string, value []byte, ttl int64) bool {
 	expiry := time.Now().Add(time.Duration(ttl) * time.Second)
 
 	var expire bool
-	if ttl != 0 {
+	if ttl < 0 {
+		return c.Delete(key)
+	} else if ttl != 0 {
 		expire = true
 	}
 
@@ -139,6 +141,8 @@ func (c *Cache) GetMulti(keys []string) (map[string][]byte, map[string]string, m
 
 // Increment adds a value of offset to the initial value. If the initial value
 // is already set, it will be added to the value currently stored in the cache.
+//
+// Initial value and offset can't be below 0.
 func (c *Cache) Increment(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false
@@ -150,6 +154,8 @@ func (c *Cache) Increment(key string, initial, offset, ttl int64) bool {
 // Decrement subtracts a value of offset to the initial value. If the initial
 // value is already set, it will be added to the value currently stored in the
 // cache.
+//
+// Initial value and offset can't be below 0.
 func (c *Cache) Decrement(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false

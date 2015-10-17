@@ -161,9 +161,12 @@ func (c *Cache) GetMulti(keys []string) (map[string][]byte, map[string]string, m
 	if err == nil {
 		values := cValues.([]interface{})
 		for i, val := range values {
-			items[keys[i]] = val.([]byte)
-			tokens[keys[i]] = encoding.Md5Sum(items[keys[i]])
-			bools[keys[i]] = true
+			byteVal, ok := val.([]byte)
+			if ok {
+				items[keys[i]] = byteVal
+				tokens[keys[i]] = encoding.Md5Sum(items[keys[i]])
+				bools[keys[i]] = true
+			}
 		}
 	}
 
@@ -202,13 +205,8 @@ func (c *Cache) Flush() bool {
 // stored, it will remove the item from the cache. If it is not stored, it will
 // return false.
 func (c *Cache) Delete(key string) bool {
-	_, err := c.client.Do("DEL", key)
-
-	if err != nil {
-		return false
-	}
-
-	return true
+	v, err := c.client.Do("DEL", key)
+	return err == nil && v.(int64) == 1
 }
 
 // DeleteMulti will delete multiple values at a time. It uses the `Delete`
