@@ -104,11 +104,30 @@ func (c *RedisCache) CompareAndReplace(token, key string, value []byte, ttl int6
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
 func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {
+	c.client.Do("WATCH", key)
+	defer c.client.Do("UNWATCH")
+
 	if !c.exists(key) {
 		return false
 	}
 
-	return c.Set(key, value, ttl)
+	// We're watching the key, so we can use a transaction to set the value. If
+	// the key changes in the meantime, it'll fail.
+	c.client.Do("MULTI")
+	c.Set(key, value, ttl)
+	vals, err := c.client.Do("EXEC")
+
+	if err != nil {
+		return false
+	}
+
+	for _, v := range vals.([]interface{}) {
+		if v.(string) != "OK" {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Get gets the value out of the map associated with the provided key.
