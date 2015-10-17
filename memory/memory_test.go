@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/jelmersnoeck/cacher"
 	"github.com/jelmersnoeck/cacher/internal/encoding"
 	"github.com/jelmersnoeck/cacher/internal/tests"
 	"github.com/jelmersnoeck/cacher/memory"
@@ -48,7 +49,7 @@ func TestLimit(t *testing.T) {
 }
 
 func ExampleCache_Add() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	ok1 := cache.Add("key1", []byte("value1"), 0)
 	val1, _, _ := cache.Get("key1")
@@ -61,12 +62,10 @@ func ExampleCache_Add() {
 	// Output:
 	// value1 true
 	// value1 false
-
-	cache.Flush()
 }
 
 func ExampleCache_Set() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	ok1 := cache.Set("key1", []byte("value1"), 0)
 	val1, _, _ := cache.Get("key1")
@@ -79,12 +78,10 @@ func ExampleCache_Set() {
 	// Output:
 	// value1 true
 	// value2 true
-
-	cache.Flush()
 }
 
 func ExampleCache_SetMulti() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -101,12 +98,10 @@ func ExampleCache_SetMulti() {
 	// Output:
 	// value1
 	// value2
-
-	cache.Flush()
 }
 
 func ExampleCache_CompareAndReplace() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	cache.Set("key1", []byte("hello world"), 0)
 	_, token, _ := cache.Get("key1")
@@ -124,12 +119,10 @@ func ExampleCache_CompareAndReplace() {
 	// Output:
 	// false hello world
 	// true replacement2
-
-	cache.Flush()
 }
 
 func ExampleCache_Replace() {
-	cache := memory.New(0)
+	cache := getCache()
 	var ok bool
 
 	ok = cache.Replace("key1", []byte("replacement"), 0)
@@ -142,12 +135,10 @@ func ExampleCache_Replace() {
 	// Output:
 	// false
 	// true
-
-	cache.Flush()
 }
 
 func ExampleCache_Get() {
-	cache := memory.New(0)
+	cache := getCache()
 	var value []byte
 	var token string
 	var ok bool
@@ -162,12 +153,10 @@ func ExampleCache_Get() {
 	// Output:
 	// false
 	// Hello world! 86fb269d190d2c85f6e0468ceca42a20 true
-
-	cache.Flush()
 }
 
 func ExampleCache_GetMulti() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -187,12 +176,10 @@ func ExampleCache_GetMulti() {
 	// [118 97 108 117 101 49] [118 97 108 117 101 50]
 	// 9946687e5fa0dab5993ededddb398d2e f066ce9385512ee02afc6e14d627e9f2
 	// true true
-
-	cache.Flush()
 }
 
 func ExampleCache_Increment() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	cache.Increment("key1", 0, 1, 0)
 	cache.Increment("key1", 0, 1, 0)
@@ -209,12 +196,10 @@ func ExampleCache_Increment() {
 	// Output:
 	// 1
 	// false string value, not incrementable
-
-	cache.Flush()
 }
 
 func ExampleCache_Decrement() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	cache.Decrement("key1", 10, 1, 0)
 	cache.Decrement("key1", 10, 3, 0)
@@ -231,12 +216,10 @@ func ExampleCache_Decrement() {
 	// Output:
 	// 7
 	// false string value, not decrementable
-
-	cache.Flush()
 }
 
 func ExampleCache_Flush() {
-	cache := memory.New(0)
+	cache := getCache()
 	var bools map[string]bool
 
 	keys := []string{"key1", "key2"}
@@ -256,12 +239,10 @@ func ExampleCache_Flush() {
 	// Output:
 	// true true
 	// false false
-
-	cache.Flush()
 }
 
 func ExampleCache_Delete() {
-	cache := memory.New(0)
+	cache := getCache()
 	var ok bool
 
 	cache.Set("key1", []byte("value1"), 0)
@@ -274,12 +255,10 @@ func ExampleCache_Delete() {
 	// Output:
 	// true
 	// false
-
-	cache.Flush()
 }
 
 func ExampleCache_DeleteMulti() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	keys := []string{"key1", "key2", "non-existing"}
 
@@ -298,12 +277,10 @@ func ExampleCache_DeleteMulti() {
 	// true
 	// true
 	// false
-
-	cache.Flush()
 }
 
 func ExampleCache_Touch() {
-	cache := memory.New(0)
+	cache := getCache()
 
 	cache.Set("key1", []byte("value1"), 1)
 	ok := cache.Touch("key1", 5)
@@ -311,6 +288,11 @@ func ExampleCache_Touch() {
 
 	// Output:
 	// true
+}
 
+func getCache() cacher.Cacher {
+	cache := memory.New(0)
 	cache.Flush()
+
+	return cache
 }
