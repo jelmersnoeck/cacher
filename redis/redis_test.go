@@ -2,53 +2,19 @@
 // Use of this source code is governed by a MIT-style license that can be found
 // in the LICENSE file.
 
-package memory_test
+package redis_test
 
 import (
 	"fmt"
-	"testing"
 
+	"github.com/garyburd/redigo/redis"
 	"github.com/jelmersnoeck/cacher/internal/encoding"
-	"github.com/jelmersnoeck/cacher/internal/tests"
-	"github.com/jelmersnoeck/cacher/memory"
+	rcache "github.com/jelmersnoeck/cacher/redis"
 )
 
-func TestLimit(t *testing.T) {
-	cache := memory.New(30)
-
-	cache.Add("key1", []byte("value1"), 0)
-	cache.Add("key2", []byte("value2"), 0)
-	cache.Add("key3", []byte("value3"), 0)
-	cache.Add("key4", []byte("value4"), 0)
-	cache.Add("key5", []byte("value5"), 0)
-
-	tests.Compare(t, cache, "key1", "value1")
-	tests.Compare(t, cache, "key2", "value2")
-	tests.Compare(t, cache, "key3", "value3")
-	tests.Compare(t, cache, "key4", "value4")
-	tests.Compare(t, cache, "key5", "value5")
-
-	cache.Add("key6", []byte("value6"), 0)
-
-	tests.NotPresent(t, cache, "key1")
-
-	cache.Delete("key3")
-	cache.Add("key7", []byte("value7"), 0)
-	tests.Compare(t, cache, "key2", "value2")
-
-	cache.Add("key8", []byte("value8"), 0)
-
-	// This is key5 due to the fact that we fetched key2 before. This pushed it
-	// back as the most active key, so it wouldn't be deleted immediately.
-	tests.NotPresent(t, cache, "key4")
-
-	cache.Add("key9", []byte("value9"), 0)
-
-	tests.NotPresent(t, cache, "key5")
-}
-
 func ExampleCache_Add() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	ok1 := cache.Add("key1", []byte("value1"), 0)
 	val1, _, _ := cache.Get("key1")
@@ -64,7 +30,8 @@ func ExampleCache_Add() {
 }
 
 func ExampleCache_Set() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	ok1 := cache.Set("key1", []byte("value1"), 0)
 	val1, _, _ := cache.Get("key1")
@@ -82,7 +49,8 @@ func ExampleCache_Set() {
 }
 
 func ExampleCache_SetMulti() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -104,7 +72,8 @@ func ExampleCache_SetMulti() {
 }
 
 func ExampleCache_CompareAndReplace() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	cache.Set("key1", []byte("hello world"), 0)
 	_, token, _ := cache.Get("key1")
@@ -127,7 +96,8 @@ func ExampleCache_CompareAndReplace() {
 }
 
 func ExampleCache_Replace() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 	var ok bool
 
 	ok = cache.Replace("key1", []byte("replacement"), 0)
@@ -145,7 +115,8 @@ func ExampleCache_Replace() {
 }
 
 func ExampleCache_Get() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 	var value []byte
 	var token string
 	var ok bool
@@ -165,7 +136,8 @@ func ExampleCache_Get() {
 }
 
 func ExampleCache_GetMulti() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -190,7 +162,8 @@ func ExampleCache_GetMulti() {
 }
 
 func ExampleCache_Increment() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	cache.Increment("key1", 0, 1, 0)
 	cache.Increment("key1", 0, 1, 0)
@@ -212,7 +185,8 @@ func ExampleCache_Increment() {
 }
 
 func ExampleCache_Decrement() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	cache.Decrement("key1", 10, 1, 0)
 	cache.Decrement("key1", 10, 3, 0)
@@ -234,7 +208,8 @@ func ExampleCache_Decrement() {
 }
 
 func ExampleCache_Flush() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 	var bools map[string]bool
 
 	keys := []string{"key1", "key2"}
@@ -259,7 +234,8 @@ func ExampleCache_Flush() {
 }
 
 func ExampleCache_Delete() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 	var ok bool
 
 	cache.Set("key1", []byte("value1"), 0)
@@ -277,7 +253,8 @@ func ExampleCache_Delete() {
 }
 
 func ExampleCache_DeleteMulti() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	keys := []string{"key1", "key2", "non-existing"}
 
@@ -301,7 +278,8 @@ func ExampleCache_DeleteMulti() {
 }
 
 func ExampleCache_Touch() {
-	cache := memory.New(0)
+	c, _ := redis.Dial("tcp", ":6379")
+	cache := rcache.New(c)
 
 	cache.Set("key1", []byte("value1"), 1)
 	ok := cache.Touch("key1", 5)
