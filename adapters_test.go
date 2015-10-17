@@ -291,11 +291,13 @@ func TestFlush(t *testing.T) {
 
 func TestTouch(t *testing.T) {
 	for _, cache := range testDrivers() {
-		var ok bool
-		ok = cache.Touch("key1", 5)
-
-		if ok {
+		if cache.Touch("key1", 5) {
 			tests.FailMsg(t, cache, "Can't touch a non-existing key.")
+		}
+
+		cache.Set("key1", []byte("Hello world"), 0)
+		if !cache.Touch("key1", 5) {
+			tests.FailMsg(t, cache, "Should be able to touch existing key.")
 		}
 	}
 }
