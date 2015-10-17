@@ -2,11 +2,13 @@
 // Use of this source code is governed by a MIT-style license that can be found
 // in the LICENSE file.
 
-package cacher
+package memory
 
 import (
 	"runtime"
 	"time"
+
+	"github.com/jelmersnoeck/cacher/internal/numbers"
 )
 
 type cachedItem struct {
@@ -26,7 +28,7 @@ type MemoryCache struct {
 
 // NewMemoryCache creates a new instance of MemoryCache and initiates the
 // storage map.
-func NewMemoryCache(limit uintptr) *MemoryCache {
+func New(limit uintptr) *MemoryCache {
 	cache := new(MemoryCache)
 	cache.items = make(map[string]cachedItem)
 	if limit == 0 {
@@ -64,7 +66,7 @@ func (c *MemoryCache) Set(key string, value []byte, ttl int64) bool {
 	expiry := time.Now().Add(time.Duration(ttl) * time.Second)
 
 	var expire bool
-	if ttl > 0 {
+	if ttl != 0 {
 		expire = true
 	}
 
@@ -188,10 +190,10 @@ func (c *MemoryCache) removeAt(index int) bool {
 // update the value with the new TTL.
 func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	if !c.exists(key) {
-		return c.Set(key, Int64Bytes(initial), ttl)
+		return c.Set(key, numbers.Int64Bytes(initial), ttl)
 	}
 
-	val, ok := BytesInt64(c.items[key].value)
+	val, ok := numbers.BytesInt64(c.items[key].value)
 
 	if !ok {
 		return false
@@ -202,7 +204,7 @@ func (c *MemoryCache) incrementOffset(key string, initial, offset, ttl int64) bo
 		return false
 	}
 
-	return c.Set(key, Int64Bytes(val), ttl)
+	return c.Set(key, numbers.Int64Bytes(val), ttl)
 }
 
 // exists checks if a key is stored in the cache.
