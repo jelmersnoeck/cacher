@@ -11,7 +11,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/jelmersnoeck/cacher"
-	"github.com/jelmersnoeck/cacher/internal/numbers"
+	"github.com/jelmersnoeck/cacher/internal/encoding"
 	"github.com/jelmersnoeck/cacher/internal/tests"
 	"github.com/jelmersnoeck/cacher/memory"
 	rcache "github.com/jelmersnoeck/cacher/redis"
@@ -29,14 +29,13 @@ func TestAdd(t *testing.T) {
 
 		tests.Compare(t, cache, "key1", "value1")
 
-		cache.Flush()
 	}
 }
 
 func TestSet(t *testing.T) {
 	values := map[string][]byte{
 		"key1": []byte("value"),
-		"key2": numbers.Int64Bytes(2),
+		"key2": encoding.Int64Bytes(2),
 	}
 
 	for _, cache := range testDrivers() {
@@ -45,27 +44,26 @@ func TestSet(t *testing.T) {
 				tests.FailMsg(t, cache, "Expecting `key1` to be `value`")
 			}
 
-			val, _ := cache.Get(key)
+			val, _, _ := cache.Get(key)
 			if !reflect.DeepEqual(val, value) {
 				tests.FailMsg(t, cache, "Value for key `"+key+"` does not match.")
 			}
 		}
 
 		cache.Set("key1", []byte("value"), -1)
-		_, ok := cache.Get("key1")
+		_, _, ok := cache.Get("key1")
 
 		if ok {
 			tests.FailMsg(t, cache, "key1 should be deleted with negative value")
 		}
 
-		cache.Flush()
 	}
 }
 
 func TestSetMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -74,7 +72,35 @@ func TestSetMulti(t *testing.T) {
 		tests.Compare(t, cache, "item1", 1)
 		tests.Compare(t, cache, "item2", "string")
 
-		cache.Flush()
+	}
+}
+
+func TestCompareAndReplace(t *testing.T) {
+	for _, cache := range testDrivers() {
+		cache.Set("key1", []byte("CompareAndReplace"), 0)
+		val1, token1, _ := cache.Get("key1")
+		if string(val1) != "CompareAndReplace" {
+			tests.FailMsg(t, cache, "`key1` should equal `CompareAndReplace`")
+		}
+
+		ok := cache.CompareAndReplace(token1, "key1", []byte("ReplacementValue"), 0)
+		if !ok {
+			tests.FailMsg(t, cache, "CompareAndReplace should be executed.")
+		}
+		val2, token2, _ := cache.Get("key1")
+		if string(val2) != "ReplacementValue" {
+			tests.FailMsg(t, cache, "`key1` should equal `ReplacementValue`")
+		}
+
+		ok = cache.CompareAndReplace(token2+"WRONG", "key1", []byte("WrongValue"), 0)
+		if ok {
+			tests.FailMsg(t, cache, "WrongValue should not be set.")
+		}
+		val3, _, _ := cache.Get("key1")
+		if string(val3) != "ReplacementValue" {
+			tests.FailMsg(t, cache, "`key1` should equal `ReplacementValue`")
+		}
+
 	}
 }
 
@@ -89,7 +115,6 @@ func TestReplace(t *testing.T) {
 			tests.FailMsg(t, cache, "Key1 has been set, should be able to replace.")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -114,7 +139,6 @@ func TestIncrement(t *testing.T) {
 			tests.FailMsg(t, cache, "Can't have an initial value of < 0")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -143,7 +167,6 @@ func TestDecrement(t *testing.T) {
 			tests.FailMsg(t, cache, "Can't decrement below 0")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -152,18 +175,32 @@ func TestGet(t *testing.T) {
 		cache.Set("key1", []byte("value1"), 0)
 		tests.Compare(t, cache, "key1", "value1")
 
-		if _, ok := cache.Get("key2"); ok {
+		if _, _, ok := cache.Get("key2"); ok {
 			tests.FailMsg(t, cache, "Key2 is not present, ok should be false.")
 		}
 
-		cache.Flush()
+	}
+}
+
+func TestGetToken(t *testing.T) {
+	for _, cache := range testDrivers() {
+		cache.Set("key1", []byte("value1"), 0)
+		_, token1, _ := cache.Get("key1")
+
+		cache.Set("key1", []byte("value2"), 0)
+		_, token2, _ := cache.Get("key1")
+
+		if token1 == token2 {
+			tests.FailMsg(t, cache, "token1 should not equal token2.")
+		}
+
 	}
 }
 
 func TestGetMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -174,18 +211,24 @@ func TestGetMulti(t *testing.T) {
 			keys = append(keys, k)
 		}
 
-		values := cache.GetMulti(keys)
+		values, tokens, bools := cache.GetMulti(keys)
 
 		_, val := binary.Varint(values["item1"])
 		if val != 1 {
 			tests.FailMsg(t, cache, "Expected `item1` to equal `1`")
 		}
 
+		if !bools["item1"] {
+			tests.FailMsg(t, cache, "Expected `item1` to be ok.")
+		}
+
+		if tokens["item1"] == "" {
+			tests.FailMsg(t, cache, "Expected `item1` to have a valid token.")
+		}
+
 		if string(values["item2"]) != "string" {
 			tests.FailMsg(t, cache, "Expected `item2` to equal `string`")
 		}
-
-		cache.Flush()
 	}
 }
 
@@ -196,18 +239,16 @@ func TestDelete(t *testing.T) {
 
 		cache.Delete("key1")
 
-		if _, ok := cache.Get("key1"); ok {
+		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "`key1` should be deleted from the cache.")
 		}
-
-		cache.Flush()
 	}
 }
 
 func TestDeleteMulti(t *testing.T) {
 	for _, cache := range testDrivers() {
 		items := map[string][]byte{
-			"item1": numbers.Int64Bytes(1),
+			"item1": encoding.Int64Bytes(1),
 			"item2": []byte("string"),
 		}
 
@@ -221,17 +262,15 @@ func TestDeleteMulti(t *testing.T) {
 
 		cache.DeleteMulti(keys)
 
-		if _, ok := cache.Get("item1"); ok {
+		if _, _, ok := cache.Get("item1"); ok {
 			tests.FailMsg(t, cache, "`item1` should be deleted from the cache.")
 		}
 
-		if _, ok := cache.Get("item2"); ok {
+		if _, _, ok := cache.Get("item2"); ok {
 			tests.FailMsg(t, cache, "`item2` should be deleted from the cache.")
 		}
 
 		tests.Compare(t, cache, "key1", "value1")
-
-		cache.Flush()
 	}
 }
 
@@ -244,20 +283,22 @@ func TestFlush(t *testing.T) {
 			tests.FailMsg(t, cache, "Cache should be able to flush")
 		}
 
-		if _, ok := cache.Get("key1"); ok {
+		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "Expecting `key1` to be nil")
 		}
-
-		cache.Flush()
 	}
 }
 
 func testDrivers() []cacher.Cacher {
 	drivers := make([]cacher.Cacher, 0)
-	drivers = append(drivers, memory.New(0))
+
+	memoryCache := memory.New(0)
+	memoryCache.Flush()
+	drivers = append(drivers, memoryCache)
 
 	c, _ := redis.Dial("tcp", ":6379")
 	redisCache := rcache.New(c)
+	redisCache.Flush()
 	drivers = append(drivers, redisCache)
 
 	return drivers

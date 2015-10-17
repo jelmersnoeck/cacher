@@ -38,13 +38,23 @@ Decrements the initial value - or cached value if present - by offset.
 Replace will update a value, only if it is present. If it is not present, false
 will be returned.
 
-#### `Get(key string) []byte`
+#### `Get(key string) ([]byte, string, bool)`
 
-Gets the value for the given key.
+Gets the value for the given key combined with a CompareAndReplace token. If the
+value is not present, `false` will be returned.
 
-#### `GetMulti(keys []string) map[string][]byte`
+#### `GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool)`
 
-Gets a list of values for a range of given keys. This uses `Get` internally.
+Gets a list of values for a range of given keys. As with `Get()`, it will return
+a map with keys and CompareAndReplace tokens. If an item doesn't exist, it will
+return false.
+
+#### `CompareAndReplace(token, key string, value []byte, ttl int64) bool`
+
+Sees if the key exists in the cache, if it doesn't it will return false. If it
+does, it will compare the token with the token in the store. If the tokens do
+not match, false will be returned. If they do match, the value will be replaced
+with a new value and true will be returned.
 
 #### `Flush() bool`
 
@@ -85,10 +95,10 @@ func main() {
 	cache := memory.New(30)
 	cache.Add("key1", []byte("value1"), 0)
 
-    v, ok := cache.Get("key1")
+    v, token, ok := cache.Get("key1")
 
     if ok {
-        fmt.Println(v)
+        fmt.Println(v, token)
     } else {
         fmt.Println("Something went wrong")
     }
@@ -117,10 +127,10 @@ func main() {
 	cache := rcache.New(c)
 	cache.Add("key1", []byte("value1"), 0)
 
-    v, ok := cache.Get("key1")
+    v, token, ok := cache.Get("key1")
 
     if ok {
-        fmt.Println(v)
+        fmt.Println(v, token)
     } else {
         fmt.Println("Something went wrong")
     }
