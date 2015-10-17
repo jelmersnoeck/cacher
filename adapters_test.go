@@ -29,7 +29,6 @@ func TestAdd(t *testing.T) {
 
 		tests.Compare(t, cache, "key1", "value1")
 
-		cache.Flush()
 	}
 }
 
@@ -58,7 +57,6 @@ func TestSet(t *testing.T) {
 			tests.FailMsg(t, cache, "key1 should be deleted with negative value")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -74,7 +72,35 @@ func TestSetMulti(t *testing.T) {
 		tests.Compare(t, cache, "item1", 1)
 		tests.Compare(t, cache, "item2", "string")
 
-		cache.Flush()
+	}
+}
+
+func TestCompareAndReplace(t *testing.T) {
+	for _, cache := range testDrivers() {
+		cache.Set("key1", []byte("CompareAndReplace"), 0)
+		val1, token1, _ := cache.Get("key1")
+		if string(val1) != "CompareAndReplace" {
+			tests.FailMsg(t, cache, "`key1` should equal `CompareAndReplace`")
+		}
+
+		ok := cache.CompareAndReplace(token1, "key1", []byte("ReplacementValue"), 0)
+		if !ok {
+			tests.FailMsg(t, cache, "CompareAndReplace should be executed.")
+		}
+		val2, token2, _ := cache.Get("key1")
+		if string(val2) != "ReplacementValue" {
+			tests.FailMsg(t, cache, "`key1` should equal `ReplacementValue`")
+		}
+
+		ok = cache.CompareAndReplace(token2+"WRONG", "key1", []byte("WrongValue"), 0)
+		if ok {
+			tests.FailMsg(t, cache, "WrongValue should not be set.")
+		}
+		val3, _, _ := cache.Get("key1")
+		if string(val3) != "ReplacementValue" {
+			tests.FailMsg(t, cache, "`key1` should equal `ReplacementValue`")
+		}
+
 	}
 }
 
@@ -89,7 +115,6 @@ func TestReplace(t *testing.T) {
 			tests.FailMsg(t, cache, "Key1 has been set, should be able to replace.")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -114,7 +139,6 @@ func TestIncrement(t *testing.T) {
 			tests.FailMsg(t, cache, "Can't have an initial value of < 0")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -143,7 +167,6 @@ func TestDecrement(t *testing.T) {
 			tests.FailMsg(t, cache, "Can't decrement below 0")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -156,7 +179,6 @@ func TestGet(t *testing.T) {
 			tests.FailMsg(t, cache, "Key2 is not present, ok should be false.")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -172,7 +194,6 @@ func TestGetToken(t *testing.T) {
 			tests.FailMsg(t, cache, "token1 should not equal token2.")
 		}
 
-		cache.Flush()
 	}
 }
 
@@ -208,8 +229,6 @@ func TestGetMulti(t *testing.T) {
 		if string(values["item2"]) != "string" {
 			tests.FailMsg(t, cache, "Expected `item2` to equal `string`")
 		}
-
-		cache.Flush()
 	}
 }
 
@@ -223,8 +242,6 @@ func TestDelete(t *testing.T) {
 		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "`key1` should be deleted from the cache.")
 		}
-
-		cache.Flush()
 	}
 }
 
@@ -254,8 +271,6 @@ func TestDeleteMulti(t *testing.T) {
 		}
 
 		tests.Compare(t, cache, "key1", "value1")
-
-		cache.Flush()
 	}
 }
 
@@ -271,17 +286,19 @@ func TestFlush(t *testing.T) {
 		if _, _, ok := cache.Get("key1"); ok {
 			tests.FailMsg(t, cache, "Expecting `key1` to be nil")
 		}
-
-		cache.Flush()
 	}
 }
 
 func testDrivers() []cacher.Cacher {
 	drivers := make([]cacher.Cacher, 0)
-	drivers = append(drivers, memory.New(0))
+
+	memoryCache := memory.New(0)
+	memoryCache.Flush()
+	drivers = append(drivers, memoryCache)
 
 	c, _ := redis.Dial("tcp", ":6379")
 	redisCache := rcache.New(c)
+	redisCache.Flush()
 	drivers = append(drivers, redisCache)
 
 	return drivers

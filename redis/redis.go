@@ -70,6 +70,37 @@ func (c *RedisCache) SetMulti(items map[string][]byte, ttl int64) map[string]boo
 	return results
 }
 
+// CompareAndReplace validates the token with the token in the store. If the
+// tokens match, we will replace the value and return true. If it doesn't, we
+// will not replace the value and return false.
+func (c *RedisCache) CompareAndReplace(token, key string, value []byte, ttl int64) bool {
+	c.client.Do("WATCH", key)
+	defer c.client.Do("UNWATCH")
+
+	if !c.exists(key) {
+		return false
+	}
+
+	_, storedToken, _ := c.Get(key)
+	if token != storedToken {
+		return false
+	}
+
+	// We're watching the key, by using MULTI the transaction will fail if the key
+	// changes in the meantime.
+	c.client.Do("MULTI")
+	c.Set(key, value, ttl)
+	rValue, _ := c.client.Do("EXEC")
+
+	for _, v := range rValue.([]interface{}) {
+		if v.(string) != "OK" {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
 func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {

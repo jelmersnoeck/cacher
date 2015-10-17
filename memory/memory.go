@@ -90,6 +90,21 @@ func (c *MemoryCache) SetMulti(items map[string][]byte, ttl int64) map[string]bo
 	return results
 }
 
+// CompareAndReplace validates the token with the token in the store. If the
+// tokens match, we will replace the value and return true. If it doesn't, we
+// will not replace the value and return false.
+func (c *MemoryCache) CompareAndReplace(token, key string, value []byte, ttl int64) bool {
+	if !c.exists(key) {
+		return false
+	}
+
+	if c.items[key].token != token {
+		return false
+	}
+
+	return c.Set(key, value, ttl)
+}
+
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
 func (c *MemoryCache) Replace(key string, value []byte, ttl int64) bool {

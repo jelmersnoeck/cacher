@@ -8,6 +8,7 @@ package cacher
 // Cacher is the Caching interface that uniforms all the different strategies.
 type Cacher interface {
 	Add(key string, value []byte, ttl int64) bool
+	CompareAndReplace(token, key string, value []byte, ttl int64) bool
 	Set(key string, value []byte, ttl int64) bool
 	SetMulti(keys map[string][]byte, ttl int64) map[string]bool
 	Replace(key string, value []byte, ttl int64) bool
