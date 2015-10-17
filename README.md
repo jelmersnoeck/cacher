@@ -7,68 +7,6 @@ Cacher is a port of the PHP library [Scrapbook](https://github.com/matthiasmulli
 It defines an interface to interact with several cache systems without having to
 worry about the implementation of said cache layer.
 
-## Methods
-
-#### `Add(key string, value []byte, ttl int) bool`
-
-Adds a new key to the cache if the key is not already stored. If the key is
-already stored false will be returned.
-
-#### `Set(key string, value []byte, ttl int) bool`
-
-Sets the value for the specified key, regardless of wether or not the key has
-already been set. If the key has already been set, it will overwrite the
-previous value.
-
-#### `SetMulti(items map[string][]byte, ttl int) map[string]bool`
-
-A shorthand to set multiple key/value combinations at a time. This uses `Set`
-internally to add the items to the cache.
-
-#### `Increment(key string, initial, offset, ttl int) bool`
-
-Increments the initial value - or cached value if present - by offset.
-
-#### `Decrement(key string, initial, offset, ttl int) bool`
-
-Decrements the initial value - or cached value if present - by offset.
-
-#### `Replace(key string, value []byte, ttl int) bool`
-
-Replace will update a value, only if it is present. If it is not present, false
-will be returned.
-
-#### `Get(key string) ([]byte, string, bool)`
-
-Gets the value for the given key combined with a CompareAndReplace token. If the
-value is not present, `false` will be returned.
-
-#### `GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool)`
-
-Gets a list of values for a range of given keys. As with `Get()`, it will return
-a map with keys and CompareAndReplace tokens. If an item doesn't exist, it will
-return false.
-
-#### `CompareAndReplace(token, key string, value []byte, ttl int64) bool`
-
-Sees if the key exists in the cache, if it doesn't it will return false. If it
-does, it will compare the token with the token in the store. If the tokens do
-not match, false will be returned. If they do match, the value will be replaced
-with a new value and true will be returned.
-
-#### `Flush() bool`
-
-Resets the cache store and deletes all cached values.
-
-#### `Delete(key string) bool`
-
-Deletes a key from the cache.
-
-#### `DeleteMulti(keys []string) map[string]bool`
-
-Deletes multiple keys at a time and returns with a result set to see if the
-deletes were successful.
-
 ## Implementations
 
 ### MemoryCache
