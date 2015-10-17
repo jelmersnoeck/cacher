@@ -61,6 +61,8 @@ func ExampleCache_Add() {
 	// Output:
 	// value1 true
 	// value1 false
+
+	cache.Flush()
 }
 
 func ExampleCache_Set() {
