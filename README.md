@@ -9,13 +9,12 @@ worry about the implementation of said cache layer.
 
 ## Implementations
 
-### MemoryCache
+### Memory
 
 [![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher/memory?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher/memory)
 
-MemoryCache stores all the data in memory. This is a non persistent cache store
-that will be flushed every time the application that uses the cache is
-terminates.
+Memory stores all the data in memory. This is a non persistent cache store that
+will be flushed every time the application that uses the cache is terminates.
 
 This cache is perfect to use for testing. There are no other dependencies
 required other than enough available memory.
@@ -45,11 +44,11 @@ func main() {
 }
 ```
 
-### RedisCache
+### Redis
 
 [![GoDoc](https://godoc.org/github.com/jelmersnoeck/cacher/redis?status.svg)](https://godoc.org/github.com/jelmersnoeck/cacher/redis)
 
-RedisCache stores all the data in a Redis instance. This cache relies on the
+Redis stores all the data in a Redis instance. This cache relies on the
 `github.com/garyburd/redigo/redis` package to communicate with Redis.
 
 #### Usage

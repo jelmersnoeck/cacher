@@ -7,6 +7,7 @@ package encoding
 
 import "crypto/md5"
 
+// Md5Sum converts an array of bytes to an md5 Sum string.
 func Md5Sum(value []byte) string {
 	md5Sum := md5.Sum(value)
 	return string(md5Sum[:])

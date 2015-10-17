@@ -9,16 +9,15 @@ import (
 	"github.com/jelmersnoeck/cacher/internal/encoding"
 )
 
-// RedisCache is a caching implementation that stores the data in memory. The
-// cache will be emptied when the application has run.
-type RedisCache struct {
+// Cache is an instance that stores a Redis client that will be used to
+// communicate with the Redis server.
+type Cache struct {
 	client redis.Conn
 }
 
-// NewRedisCache creates a new instance of RedisCache and initiates the
-// storage map.
-func New(client redis.Conn) *RedisCache {
-	cache := new(RedisCache)
+// New creates a new instance of Cache.
+func New(client redis.Conn) *Cache {
+	cache := new(Cache)
 	cache.client = client
 
 	return cache
@@ -29,7 +28,7 @@ func New(client redis.Conn) *RedisCache {
 //
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
 // the item will be cached infinitely.
-func (c *RedisCache) Add(key string, value []byte, ttl int64) bool {
+func (c *Cache) Add(key string, value []byte, ttl int64) bool {
 	if c.exists(key) {
 		return false
 	}
@@ -42,7 +41,7 @@ func (c *RedisCache) Add(key string, value []byte, ttl int64) bool {
 //
 // ttl defines the number of seconds the value should be cached. If ttl is 0,
 // the item will be cached infinitely.
-func (c *RedisCache) Set(key string, value []byte, ttl int64) bool {
+func (c *Cache) Set(key string, value []byte, ttl int64) bool {
 	var err error
 
 	if ttl > 0 {
@@ -58,7 +57,7 @@ func (c *RedisCache) Set(key string, value []byte, ttl int64) bool {
 
 // SetMulti sets multiple values for their respective keys. This is a shorthand
 // to use `Set` multiple times.
-func (c *RedisCache) SetMulti(items map[string][]byte, ttl int64) map[string]bool {
+func (c *Cache) SetMulti(items map[string][]byte, ttl int64) map[string]bool {
 	results := make(map[string]bool)
 
 	c.client.Do("MULTI")
@@ -73,7 +72,7 @@ func (c *RedisCache) SetMulti(items map[string][]byte, ttl int64) map[string]boo
 // CompareAndReplace validates the token with the token in the store. If the
 // tokens match, we will replace the value and return true. If it doesn't, we
 // will not replace the value and return false.
-func (c *RedisCache) CompareAndReplace(token, key string, value []byte, ttl int64) bool {
+func (c *Cache) CompareAndReplace(token, key string, value []byte, ttl int64) bool {
 	c.client.Do("WATCH", key)
 	defer c.client.Do("UNWATCH")
 
@@ -103,7 +102,7 @@ func (c *RedisCache) CompareAndReplace(token, key string, value []byte, ttl int6
 
 // Replace will update and only update the value of a cache key. If the key is
 // not previously used, we will return false.
-func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {
+func (c *Cache) Replace(key string, value []byte, ttl int64) bool {
 	c.client.Do("WATCH", key)
 	defer c.client.Do("UNWATCH")
 
@@ -131,7 +130,7 @@ func (c *RedisCache) Replace(key string, value []byte, ttl int64) bool {
 }
 
 // Get gets the value out of the map associated with the provided key.
-func (c *RedisCache) Get(key string) ([]byte, string, bool) {
+func (c *Cache) Get(key string) ([]byte, string, bool) {
 	value, _ := c.client.Do("GET", key)
 
 	if value == nil {
@@ -149,7 +148,7 @@ func (c *RedisCache) Get(key string) ([]byte, string, bool) {
 
 // GetMulti gets multiple values from the cache and returns them as a map. It
 // uses `Get` internally to retrieve the data.
-func (c *RedisCache) GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool) {
+func (c *Cache) GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool) {
 	cValues, err := c.client.Do("MGET", keyArgs(keys)...)
 	items := make(map[string][]byte)
 	bools := make(map[string]bool)
@@ -173,7 +172,7 @@ func (c *RedisCache) GetMulti(keys []string) (map[string][]byte, map[string]stri
 
 // Increment adds a value of offset to the initial value. If the initial value
 // is already set, it will be added to the value currently stored in the cache.
-func (c *RedisCache) Increment(key string, initial, offset, ttl int64) bool {
+func (c *Cache) Increment(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false
 	}
@@ -184,7 +183,7 @@ func (c *RedisCache) Increment(key string, initial, offset, ttl int64) bool {
 // Decrement subtracts a value of offset to the initial value. If the initial
 // value is already set, it will be added to the value currently stored in the
 // cache.
-func (c *RedisCache) Decrement(key string, initial, offset, ttl int64) bool {
+func (c *Cache) Decrement(key string, initial, offset, ttl int64) bool {
 	if initial < 0 || offset <= 0 {
 		return false
 	}
@@ -193,7 +192,7 @@ func (c *RedisCache) Decrement(key string, initial, offset, ttl int64) bool {
 }
 
 // Flush will remove all the items from the hash.
-func (c *RedisCache) Flush() bool {
+func (c *Cache) Flush() bool {
 	_, err := c.client.Do("FLUSHDB")
 
 	return err == nil
@@ -202,7 +201,7 @@ func (c *RedisCache) Flush() bool {
 // Delete will validate if the key actually is stored in the cache. If it is
 // stored, it will remove the item from the cache. If it is not stored, it will
 // return false.
-func (c *RedisCache) Delete(key string) bool {
+func (c *Cache) Delete(key string) bool {
 	_, err := c.client.Do("DEL", key)
 
 	if err != nil {
@@ -215,7 +214,7 @@ func (c *RedisCache) Delete(key string) bool {
 // DeleteMulti will delete multiple values at a time. It uses the `Delete`
 // method internally to do so. It will return a map of results to see if the
 // deletion is successful.
-func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
+func (c *Cache) DeleteMulti(keys []string) map[string]bool {
 	items, _, _ := c.GetMulti(keys)
 	c.client.Do("DEL", keyArgs(keys)...)
 
@@ -235,7 +234,7 @@ func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
 // Decrement. If the key isn't set before, we will set the initial value. If
 // there is a value present, we will add the given offset to that value and
 // update the value with the new TTL.
-func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) bool {
+func (c *Cache) incrementOffset(key string, initial, offset, ttl int64) bool {
 	c.client.Do("WATCH", key)
 
 	if !c.exists(key) {
@@ -265,7 +264,7 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 	return c.Set(key, encoding.Int64Bytes(val), ttl)
 }
 
-func (c *RedisCache) exists(key string) bool {
+func (c *Cache) exists(key string) bool {
 	val, _ := c.client.Do("EXISTS", key)
 
 	if val.(int64) == 1 {
