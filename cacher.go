@@ -19,4 +19,5 @@ type Cacher interface {
 	Get(key string) ([]byte, string, bool)
 	GetMulti(keys []string) (map[string][]byte, map[string]string, map[string]bool)
 	Flush() bool
+	Touch(key string, ttl int64) bool
 }
