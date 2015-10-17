@@ -219,6 +219,10 @@ func (c *RedisCache) DeleteMulti(keys []string) map[string]bool {
 	items, _, _ := c.GetMulti(keys)
 	c.client.Do("DEL", keyArgs(keys)...)
 
+	// DEL will only return false if the key is not present. To get a map of bools
+	// to return, we can go over the items that are in the store (before we've
+	// deleted them) and see which of the specified keys to delete are present in
+	// the list of items.
 	results := make(map[string]bool)
 	for _, key := range keys {
 		_, results[key] = items[key]
@@ -247,6 +251,9 @@ func (c *RedisCache) incrementOffset(key string, initial, offset, ttl int64) boo
 		return false
 	}
 
+	// We are watching our key. With using a transaction, we can check that this
+	// increment doesn't inflect with another concurrent request that might
+	// happen.
 	c.client.Do("MULTI")
 	defer c.client.Do("EXEC")
 
