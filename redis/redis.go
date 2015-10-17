@@ -230,6 +230,21 @@ func (c *Cache) DeleteMulti(keys []string) map[string]bool {
 	return results
 }
 
+// Touch will update the key's ttl to the given ttl value without altering the
+// value.
+func (c *Cache) Touch(key string, ttl int64) bool {
+	if !c.exists(key) {
+		return false
+	}
+
+	if ttl < 0 {
+		return c.Delete(key)
+	}
+
+	_, err := c.client.Do("EXPIRE", key, ttl)
+	return err == nil
+}
+
 // incrementOffset is a common incrementor method used between Increment and
 // Decrement. If the key isn't set before, we will set the initial value. If
 // there is a value present, we will add the given offset to that value and

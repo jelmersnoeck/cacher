@@ -21,7 +21,7 @@ type cachedItem struct {
 // Cache is a caching implementation that stores the data in memory. The
 // cache will be emptied when the application has run.
 type Cache struct {
-	items map[string]cachedItem
+	items map[string]*cachedItem
 	keys  []string
 	limit uintptr
 	size  uintptr
@@ -30,7 +30,7 @@ type Cache struct {
 // New creates a new instance of Cache and initiates the storage map.
 func New(limit uintptr) *Cache {
 	cache := new(Cache)
-	cache.items = make(map[string]cachedItem)
+	cache.items = make(map[string]*cachedItem)
 	if limit == 0 {
 		// 10% of system memory
 		var memStats runtime.MemStats
@@ -70,7 +70,7 @@ func (c *Cache) Set(key string, value []byte, ttl int64) bool {
 		expire = true
 	}
 
-	c.items[key] = cachedItem{value, expiry, expire, encoding.Md5Sum(value)}
+	c.items[key] = &cachedItem{value, expiry, expire, encoding.Md5Sum(value)}
 	c.keys = append(c.keys, key)
 	c.size += uintptr(len(value)) // TODO: if already exists, don't add this all
 	c.lru(key)
@@ -160,7 +160,7 @@ func (c *Cache) Decrement(key string, initial, offset, ttl int64) bool {
 
 // Flush will remove all the items from the hash.
 func (c *Cache) Flush() bool {
-	c.items = make(map[string]cachedItem)
+	c.items = make(map[string]*cachedItem)
 	c.size = 0
 	return true
 }
@@ -189,6 +189,21 @@ func (c *Cache) DeleteMulti(keys []string) map[string]bool {
 	}
 
 	return results
+}
+
+// Touch will update the key's ttl to the given ttl value without altering the
+// value.
+func (c *Cache) Touch(key string, ttl int64) bool {
+	if !c.exists(key) {
+		return false
+	}
+
+	if ttl < 0 {
+		return c.Delete(key)
+	}
+
+	c.items[key].expiry = time.Now().Add(time.Duration(ttl) * time.Second)
+	return true
 }
 
 // removeAt will remove a specific indexed value from our cache.
