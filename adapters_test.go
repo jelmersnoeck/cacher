@@ -207,7 +207,7 @@ func TestGetMulti(t *testing.T) {
 		cache.SetMulti(items, 0)
 
 		var keys []string
-		for k, _ := range items {
+		for k := range items {
 			keys = append(keys, k)
 		}
 
@@ -256,7 +256,7 @@ func TestDeleteMulti(t *testing.T) {
 		cache.Set("key1", []byte("value1"), 0)
 
 		var keys []string
-		for k, _ := range items {
+		for k := range items {
 			keys = append(keys, k)
 		}
 
@@ -290,7 +290,7 @@ func TestFlush(t *testing.T) {
 }
 
 func testDrivers() []cacher.Cacher {
-	drivers := make([]cacher.Cacher, 0)
+	var drivers []cacher.Cacher
 
 	memoryCache := memory.New(0)
 	memoryCache.Flush()
