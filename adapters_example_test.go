@@ -11,7 +11,7 @@ import (
 	"github.com/jelmersnoeck/cacher/internal/encoding"
 )
 
-func ExampleCache_Add() {
+func ExampleAdd() {
 	cacher.Flush()
 	ok1 := cacher.Add("key1", []byte("value1"), 0)
 	val1, _, _ := cacher.Get("key1")
@@ -26,7 +26,7 @@ func ExampleCache_Add() {
 	// value1 Key `key1` already exists.
 }
 
-func ExampleCache_Set() {
+func ExampleSet() {
 	cacher.Flush()
 	ok1 := cacher.Set("key1", []byte("value1"), 0)
 	val1, _, _ := cacher.Get("key1")
@@ -41,7 +41,7 @@ func ExampleCache_Set() {
 	// value2 <nil>
 }
 
-func ExampleCache_SetMulti() {
+func ExampleSetMulti() {
 	cacher.Flush()
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -60,7 +60,7 @@ func ExampleCache_SetMulti() {
 	// value2
 }
 
-func ExampleCache_CompareAndReplace() {
+func ExampleCompareAndReplace() {
 	cacher.Flush()
 	cacher.Set("key1", []byte("hello world"), 0)
 	_, token, _ := cacher.Get("key1")
@@ -80,7 +80,7 @@ func ExampleCache_CompareAndReplace() {
 	// <nil> replacement2
 }
 
-func ExampleCache_Replace() {
+func ExampleReplace() {
 	cacher.Flush()
 	var err error
 
@@ -96,7 +96,7 @@ func ExampleCache_Replace() {
 	// <nil>
 }
 
-func ExampleCache_Get() {
+func ExampleGet() {
 	cacher.Flush()
 	var value []byte
 	var token string
@@ -114,7 +114,7 @@ func ExampleCache_Get() {
 	// Hello world! 86fb269d190d2c85f6e0468ceca42a20 <nil>
 }
 
-func ExampleCache_GetMulti() {
+func ExampleGetMulti() {
 	cacher.Flush()
 	multi := map[string][]byte{
 		"key1": []byte("value1"),
@@ -136,7 +136,7 @@ func ExampleCache_GetMulti() {
 	// <nil> <nil>
 }
 
-func ExampleCache_Increment() {
+func ExampleIncrement() {
 	cacher.Flush()
 	cacher.Increment("key1", 0, 1, 0)
 	cacher.Increment("key1", 0, 1, 0)
@@ -155,7 +155,7 @@ func ExampleCache_Increment() {
 	// Value for key `key2` could not be encoded. string value, not incrementable
 }
 
-func ExampleCache_Decrement() {
+func ExampleDecrement() {
 	cacher.Flush()
 	cacher.Decrement("key1", 10, 1, 0)
 	cacher.Decrement("key1", 10, 3, 0)
@@ -174,7 +174,7 @@ func ExampleCache_Decrement() {
 	// Value for key `key2` could not be encoded. string value, not decrementable
 }
 
-func ExampleCache_Flush() {
+func ExampleFlush() {
 	cacher.Flush()
 	var errs map[string]error
 
@@ -197,7 +197,7 @@ func ExampleCache_Flush() {
 	// Key `key1` does not exist. Key `key2` does not exist.
 }
 
-func ExampleCache_Delete() {
+func ExampleDelete() {
 	cacher.Flush()
 	var err error
 
@@ -213,7 +213,7 @@ func ExampleCache_Delete() {
 	// Key `non-existing` was not found.
 }
 
-func ExampleCache_DeleteMulti() {
+func ExampleDeleteMulti() {
 	cacher.Flush()
 	keys := []string{"key1", "key2", "non-existing"}
 
@@ -234,7 +234,7 @@ func ExampleCache_DeleteMulti() {
 	// Key `non-existing` was not found.
 }
 
-func ExampleCache_Touch() {
+func ExampleTouch() {
 	cacher.Flush()
 	cacher.Set("key1", []byte("value1"), 1)
 	err := cacher.Touch("key1", 5)
