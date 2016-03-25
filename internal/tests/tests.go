@@ -39,15 +39,15 @@ func Compare(t *testing.T, cache cacher.Cacher, key string, value interface{}) {
 // NotPresent ensures that the given key is not present in the given cache. If
 // it is present, the test will fail and print an error message.
 func NotPresent(t *testing.T, cache cacher.Cacher, key string) {
-	if _, _, ok := cache.Get(key); ok {
+	if _, _, err := cache.Get(key); err != nil {
 		FailMsg(t, cache, "Expected `"+key+"` not to be present")
 	}
 }
 
 // FailMsg will print an error message that specifies the cache type and fail
 // the given test instance.
-func FailMsg(t *testing.T, cache cacher.Cacher, msg string) {
+func FailMsg(t *testing.T, cache cacher.Cacher, msg string, s ...interface{}) {
 	errMsg := reflect.TypeOf(cache).String() + ": " + msg
-	t.Errorf(errMsg)
+	t.Errorf(errMsg, s...)
 	t.FailNow()
 }
